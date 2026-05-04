@@ -242,7 +242,7 @@ def test_resample_target_channel_same(request, er_type):
         ("regular"),
     ],
 )
-def test_resample_with_channel(request, er_type):
+def test_resample_with_channel(request, er_type, calculate_total_energy):
     """Testing the resample_to_geometry by evaluating energy loss after resampling using a target channel"""
     if er_type == "regular":
         ds_Sv = request.getfixturevalue("ds_Sv_echo_range_regular")
@@ -270,8 +270,7 @@ def test_resample_with_channel(request, er_type):
         ("regular"),  
     ],
 )
-
-def test_resample_with_grid(request, er_type):
+def test_resample_with_grid(request, er_type, calculate_total_energy):
     """Testing the resample_to_geometry by evaluating energy loss after resampling using a target grid"""
     if er_type == "regular":
         ds_Sv = request.getfixturevalue("ds_Sv_echo_range_regular")
@@ -279,9 +278,16 @@ def test_resample_with_grid(request, er_type):
         ds_Sv = request.getfixturevalue("ds_Sv_echo_range_irregular")
     
     channel = ds_Sv["channel"].values[0]
-    ds_regridded = ep.commongrid.resample_to_geometry(ds_Sv.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}), target_variable="Sv", target_grid = ds_Sv.chunk({"channel": 1, "ping_time": 500, "range_sample": -1})["echo_range"].sel(channel=channel))
+    
+    ds_regridded = ep.commongrid.resample_to_geometry(
+        ds_Sv.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}), 
+        target_variable="Sv", 
+        target_grid=ds_Sv.chunk({"channel": 1, "ping_time": 500, "range_sample": -1})["echo_range"].sel(channel=channel)
+    )
 
     channels = ds_Sv["channel"].values
+    
+    # We can now call the factory function returned by the fixture
     total_energy_original = [calculate_total_energy(ds_Sv, ch) for ch in channels]
     total_energy_regridded = [calculate_total_energy(ds_regridded, ch) for ch in channels]
 

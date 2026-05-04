@@ -559,11 +559,15 @@ def resample_to_geometry(
 
     # Attach attributes
     new_ds[target_variable].attrs = ds_Sv[target_variable].attrs
+    range_var_attrs = np.round(target_range_da.diff("range_sample").mean().values, decimals=4)
     if target_channel:
         new_ds[target_variable].attrs["resampling_mode"] = "target_channel"
         new_ds[target_variable].attrs["target_channel"] = target_channel
+        new_ds[target_variable].attrs["grid_spacing"] = str(range_var_attrs) + "m"
     else:
         new_ds[target_variable].attrs["resampling_mode"] = "target_grid"
+        new_ds[target_variable].attrs["target_grid"] = target_grid
+        new_ds[target_variable].attrs["grid_spacing"] = str(range_var_attrs) + "m"
 
     prov_dict = echopype_prov_attrs(process_type="processing")
     prov_dict["processing_function"] = "commongrid.resample_to_geometry"
