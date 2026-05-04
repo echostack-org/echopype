@@ -20,71 +20,62 @@ def ek80_path(test_path):
     return test_path['EK80']
 
 @pytest.fixture
-def calculate_total_energy(ds, channel):
+def calculate_total_energy():
     """
-    Calculates the total integrated energy (Linear Sv * Thickness) 
-    per ping for a specific channel.
-    
-    Parameters
-    ----------
-    ds : xr.Dataset
-        Dataset containing 'Sv' and 'echo_range'.
-    channel : str
-        Label of the channel to calculate.
-
-    Returns
-    -------
-    np.ndarray
-        1D array of Total Energy per ping.
+    Returns a function that calculates the total integrated energy 
+    (Linear Sv * Thickness) per ping for a specific channel.
     """
-    # Select Data
-    ds_channel = ds.sel(channel=channel)
-    sv = ds_channel['Sv'].values
-    echo_range = ds_channel['echo_range'].values
-    
-    n_pings = sv.shape[0]
-    total_energy = np.zeros(n_pings)
-    
-    for i in range(n_pings):
-        # Extract row
-        range_row = echo_range[i, :]
-        sv_row = sv[i, :]
+    def _calc(ds, channel):
+        # Select Data
+        ds_channel = ds.sel(channel=channel)
+        sv = ds_channel['Sv'].values
+        echo_range = ds_channel['echo_range'].values
         
-        # Mask
-        valid_range = ~np.isnan(range_row)
+        n_pings = sv.shape[0]
+        total_energy = np.zeros(n_pings)
         
-        if not np.any(valid_range):
-            total_energy[i] = 0.0
-            continue
+        for i in range(n_pings):
+            # Extract row
+            range_row = echo_range[i, :]
+            sv_row = sv[i, :]
             
-        # Get valid geometry
-        range_valid = range_row[valid_range]
-        sv_valid = sv_row[valid_range]
-        
-        # Calculate Thickness using Midpoints 
-        if len(range_valid) > 1:
-            midpoints = 0.5 * (range_valid[:-1] + range_valid[1:])
+            # Mask
+            valid_range = ~np.isnan(range_row)
+            
+            if not np.any(valid_range):
+                total_energy[i] = 0.0
+                continue
+                
+            # Get valid geometry
+            range_valid = range_row[valid_range]
+            sv_valid = sv_row[valid_range]
+            
+            # Calculate Thickness using Midpoints 
+            if len(range_valid) > 1:
+                midpoints = 0.5 * (range_valid[:-1] + range_valid[1:])
 
-            d_start = range_valid[1] - range_valid[0]
-            d_end = range_valid[-1] - range_valid[-2]
-            
-            edges = np.concatenate([
-                [range_valid[0] - d_start/2], 
-                midpoints, 
-                [range_valid[-1] + d_end/2]
-            ])
-            
-            thickness = np.diff(edges)
-        else:
-            thickness = np.array([1.0])
+                d_start = range_valid[1] - range_valid[0]
+                d_end = range_valid[-1] - range_valid[-2]
+                
+                edges = np.concatenate([
+                    [range_valid[0] - d_start/2], 
+                    midpoints, 
+                    [range_valid[-1] + d_end/2]
+                ])
+                
+                thickness = np.diff(edges)
+            else:
+                thickness = np.array([1.0])
 
-        linear_sv = 10 ** (sv_valid / 10.0)
+            linear_sv = 10 ** (sv_valid / 10.0)
+            
+            linear_sv = np.nan_to_num(linear_sv, nan=0.0)
+            
+            total_energy[i] = np.sum(linear_sv * thickness)
         
-        linear_sv = np.nan_to_num(linear_sv, nan=0.0)
+        return total_energy
         
-        total_energy[i] = np.sum(linear_sv * thickness)
-    
-    return total_energy
+    return _calc
     
 
     
