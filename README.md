@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/OSOceanAcoustics/echopype/master/docs/source/_static/echopype_logo_banner.png" width="400">
+  <img src="https://raw.githubusercontent.com/echostack-org/echopype/main/docs/source/_static/echopype_logo_banner.png" width="400">
 </div>
 
 # Echopype
@@ -9,26 +9,26 @@
     <img src="https://img.shields.io/badge/DOI-10.5281/zenodo.3906999-blue" alt="DOI">
   </a>
 
-  <a href="https://raw.githubusercontent.com/OSOceanAcoustics/echopype/master/LICENSE">
-    <img alt="GitHub License" src="https://img.shields.io/github/license/OSOceanAcoustics/echopype">
+  <a href="https://raw.githubusercontent.com/echostack-org/echopype/main/LICENSE">
+    <img alt="GitHub License" src="https://img.shields.io/github/license/echostack-org/echopype">
   </a>
 </div>
 
 <div>
-  <a href="https://github.com/OSOceanAcoustics/echopype/actions/workflows/build.yaml">
-    <img src="https://github.com/OSOceanAcoustics/echopype/actions/workflows/build.yaml/badge.svg"/>
+  <a href="https://github.com/echostack-org/echopype/actions/workflows/build.yaml">
+    <img src="https://github.com/echostack-org/echopype/actions/workflows/build.yaml/badge.svg"/>
   </a>
 
-  <a href="https://results.pre-commit.ci/latest/github/OSOceanAcoustics/echopype/master">
-    <img src="https://results.pre-commit.ci/badge/github/OSOceanAcoustics/echopype/master.svg"/>
+  <a href="https://results.pre-commit.ci/latest/github/echostack-org/echopype/main">
+    <img src="https://results.pre-commit.ci/badge/github/echostack-org/echopype/main.svg"/>
   </a>
 
   <a href="https://echopype.readthedocs.io/en/latest/?badge=latest">
     <img src="https://readthedocs.org/projects/echopype/badge/?version=latest"/>
   </a>
 
-  <a href="https://codecov.io/gh/OSOceanAcoustics/echopype">
-    <img src="https://codecov.io/gh/OSOceanAcoustics/echopype/branch/master/graph/badge.svg?token=GT98F919XR"/>
+  <a href="https://codecov.io/gh/echostack-org/echopype">
+    <img src="https://codecov.io/gh/echostack-org/echopype/branch/main/graph/badge.svg?token=GT98F919XR"/>
   </a>
 </div>
 
@@ -52,7 +52,7 @@ at SciPy 2019 for background, discussions and a quick demo!
 
 ## Documentation
 
-Learn more about echopype in the official documentation at https://echopype.readthedocs.io. Check out executable examples in the companion repository https://github.com/OSOceanAcoustics/echopype-examples.
+Learn more about echopype in the official documentation at https://echopype.readthedocs.io. Check out executable examples in the companion repository https://github.com/echostack-org/echopype-examples.
 
 
 ## Contributing
@@ -77,7 +77,7 @@ Please report any bugs by [creating issues on GitHub](https://medium.com/nyc-pla
 
 ## Contributors
 
-[![Contributors](https://contrib.rocks/image?repo=OSOceanAcoustics/echopype)](https://github.com/OSOceanAcoustics/echopype/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=echostack-org/echopype)](https://github.com/echostack-org/echopype/graphs/contributors)
 
 Wu-Jung Lee ([@leewujung](https://github.com/leewujung))
 founded the echopype project in 2018 and continue to be the primary contributor
@@ -92,7 +92,7 @@ have contributed significantly to the code.
 Valentina Staneva ([@valentina-s](https://github.com/valentina-s)) is also part of the development team. Lloyd Izard ([@LOCEANlloydizard](https://github.com/LOCEANlloydizard)) joined the project in 2025
 and is an active contributor.
 
-A complete list of direct contributors is on our [GitHub Contributors Page](https://github.com/OSOceanAcoustics/echopype/graphs/contributors).
+A complete list of direct contributors is on our [GitHub Contributors Page](https://github.com/echostack-org/echopype/graphs/contributors).
 
 
 ## Acknowledgement
@@ -122,29 +122,26 @@ as part of the Schmidt Sciences Virtual Institute for Scientific Software (VISS)
   <tr>
     <td align="center" style="border: 0;">
       <a href="https://oceanexplorer.noaa.gov/news/oer-updates/2021/fy21-ffo-schedule.html" style="text-decoration:none;">
-        <img src="assets/logos/noaa.png" alt="NOAA" width="120">
+        <img src="docs/source/_static/logos/noaa.png" alt="NOAA" width="120">
       </a>
     </td>
     <td align="center" style="border: 0;">
       <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1849930&HistoricalAwards=false" style="text-decoration:none;">
-        <img src="assets/logos/nsf.png" alt="NSF" width="120">
+        <img src="docs/source/_static/logos/nsf.png" alt="NSF" width="120">
       </a>
     </td>
     <td align="center" style="border: 0;">
       <a href="https://escience.washington.edu/software-engineering/ssec/" style="text-decoration:none;">
-        <img src="assets/logos/ssec.png" alt="SSEC" width="120">
+        <img src="docs/source/_static/logos/ssec.png" alt="SSEC" width="120">
       </a>
     </td>
     <td align="center" style="border: 0;">
       <a href="https://voiceoftheocean.org/" style="text-decoration:none;">
-        <img src="assets/logos/voto.png" alt="VOTO Foundation" width="120">
+        <img src="docs/source/_static/logos/voto.png" alt="VOTO Foundation" width="120">
       </a>
     </td>
   </tr>
 </table>
-
-
-
 
 
 ## License

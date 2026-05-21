@@ -1790,27 +1790,38 @@ def test_blackwell_vs_basic_close_local(ek80_path):
         pytest.fail(f"Missing EK80 RAW: {raw_path}")
 
     ed = ep.open_raw(raw_path, sonar_model="EK80")
-    ds_Sv = ep.calibrate.compute_Sv(ed, waveform_mode="CW", encode_mode="power")
-    ds_Sv = ep.consolidate.add_depth(ds_Sv, ed, depth_offset=9.8)
+
+    ds_Sv = ep.calibrate.compute_Sv(
+        ed,
+        waveform_mode="CW",
+        encode_mode="power",
+    )
+
+    ds_Sv = ep.consolidate.add_depth(
+        ds_Sv,
+        ed,
+        depth_offset=9.8,
+    )
+
+    # Add split-beam angles required by Blackwell
+    ds_Sv = ep.consolidate.add_splitbeam_angle(
+        ds_Sv,
+        ed,
+        waveform_mode="CW",
+        encode_mode="power",
+        to_disk=False,
+    )
 
     # Pick an available channel
     sel_channel = "WBT 400142-15 ES70-7C_ES"
 
-    # attach angles (required by Blackwell)
-    angle_along = ed["Sonar/Beam_group1"]["angle_alongship"]
-    angle_athwart = ed["Sonar/Beam_group1"]["angle_athwartship"]
-    ds_Sv = ds_Sv.assign(
-        angle_alongship=angle_along,
-        angle_athwartship=angle_athwart,
-    )
-    
     blackwell_depth = detect_seafloor(
         ds=ds_Sv,
         method="blackwell",
         params={
-            "var_name": "Sv",
             "channel": sel_channel,
-            "threshold": [-40, 702, 282],
+            "var_name": "Sv",
+            "threshold": [-40, 2.4, 1.0],
             "offset": 0.3,
             "r0": 10,
             "r1": 1000,
@@ -1820,11 +1831,11 @@ def test_blackwell_vs_basic_close_local(ek80_path):
     )
 
     basic_depth = detect_seafloor(
-        ds_Sv,
+        ds=ds_Sv,
         method="basic",
         params={
-            "var_name": "Sv",
             "channel": sel_channel,
+            "var_name": "Sv",
             "threshold": (-40, -20),
             "offset_m": 0.3,
             "bin_skip_from_surface": 200,
@@ -1833,13 +1844,21 @@ def test_blackwell_vs_basic_close_local(ek80_path):
 
     assert isinstance(blackwell_depth, xr.DataArray)
     assert blackwell_depth.dims == ("ping_time",)
+
+    assert isinstance(basic_depth, xr.DataArray)
     assert basic_depth.dims == ("ping_time",)
-    assert np.array_equal(blackwell_depth["ping_time"], basic_depth["ping_time"])
+
+    assert np.array_equal(
+        blackwell_depth["ping_time"],
+        basic_depth["ping_time"],
+    )
 
     b = blackwell_depth.values
     c = basic_depth.values
+
     m = np.isfinite(b) & np.isfinite(c)
     assert m.any(), "No overlapping finite detections to compare."
+
     mad = np.median(np.abs(b[m] - c[m]))
     assert mad < 5.0, f"Median abs diff too large: {mad:.2f} m"
 
