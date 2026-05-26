@@ -21,7 +21,7 @@ logger = _init_logger(__name__)
 
 
 def _compute_cal(
-    cal_type,
+    cal_type: str,
     echodata: EchoData,
     env_params=None,
     cal_params=None,
@@ -30,6 +30,7 @@ def _compute_cal(
     encode_mode=None,
     assume_single_filter_time=None,
     drop_last_hanning_zero=False,
+    **kwargs,
 ):
     # Make waveform_mode "FM" equivalent to "BB"
     waveform_mode = "BB" if waveform_mode == "FM" else waveform_mode
@@ -80,13 +81,26 @@ def _compute_cal(
         # Check Echodata backscatter data size and recommend chunking if data is too large
         cal_obj._check_echodata_backscatter_size()
 
-        # Perform calibration
-        if cal_type == "Sv":
-            cal_ds = cal_obj.compute_Sv()
-        else:
-            cal_ds = cal_obj.compute_TS()
+        compute_methods = {
+            "Sv": "compute_Sv",
+            "TS": "compute_TS",
+            "Sv_f": "compute_Sv_f",
+            "TS_f": "compute_TS_f",
+        }
 
-        return cal_ds
+        try:
+            method_name = compute_methods[cal_type]
+        except KeyError:
+            raise ValueError(f"Unsupported calibration type: {cal_type}") from None
+
+        compute_method = getattr(cal_obj, method_name, None)
+
+        if compute_method is None:
+            raise ValueError(
+                f"{cal_type} calibration is not supported for " f"{echodata.sonar_model} data."
+            )
+
+        return compute_method(**kwargs)
 
     # Calibrate as a single dataset if not Ex80
     if echodata.sonar_model not in ["EK80", "ES80", "EA640"]:
@@ -201,12 +215,33 @@ def _compute_cal(
         """Add attributes to backscattering strength dataset.
         cal_type: Sv or TS
         """
-        ds["range_sample"].attrs = {"long_name": "Along-range sample number, base 0"}
-        ds["echo_range"].attrs = {"long_name": "Range distance", "units": "m"}
+        if "range_sample" in ds:
+            ds["range_sample"].attrs = {"long_name": "Along-range sample number, base 0"}
+
+        if "echo_range" in ds:
+            ds["echo_range"].attrs = {
+                "long_name": "Range distance",
+                "units": "m",
+            }
+
+        if "svf_range" in ds:
+            ds["svf_range"].attrs = {
+                "long_name": "Range distance for Sv(f)/TS(f) window centres",
+                "units": "m",
+            }
+
+        if "frequency" in ds:
+            ds["frequency"].attrs = {
+                "long_name": "Frequency",
+                "units": "Hz",
+            }
+
         ds[cal_type].attrs = {
             "long_name": {
                 "Sv": "Volume backscattering strength (Sv re 1 m-1)",
                 "TS": "Target strength (TS re 1 m^2)",
+                "Sv_f": "Frequency-dependent volume backscattering strength (Sv(f) re 1 m-1)",
+                "TS_f": "Frequency-dependent target strength (TS(f) re 1 m^2)",
             }[cal_type],
             "units": "dB",
         }
@@ -345,6 +380,15 @@ def compute_Sv(echodata: EchoData, **kwargs) -> xr.Dataset:
     return _compute_cal(cal_type="Sv", echodata=echodata, **kwargs)
 
 
+def compute_Sv_f(echodata: EchoData, **kwargs) -> xr.Dataset:
+    """
+    Compute frequency-dependent volume backscattering strength Sv(f)
+    from broadband EK80 complex data.
+    TODO: add more details here when the function is fully implemented
+    """
+    return _compute_cal(cal_type="Sv_f", echodata=echodata, **kwargs)
+
+
 def compute_TS(echodata: EchoData, **kwargs):
     """
     Compute target strength (TS) from raw data.
@@ -447,3 +491,12 @@ def compute_TS(echodata: EchoData, **kwargs):
     https://doi.org/10.1006/jmsc.2001.1158
     """
     return _compute_cal(cal_type="TS", echodata=echodata, **kwargs)
+
+
+def compute_TS_f(echodata: EchoData, **kwargs) -> xr.Dataset:
+    """
+    Compute frequency-dependent target strength TS(f)
+    from broadband EK80 complex data.
+    TODO: add more details here when the function is fully implemented
+    """
+    return _compute_cal(cal_type="TS_f", echodata=echodata, **kwargs)

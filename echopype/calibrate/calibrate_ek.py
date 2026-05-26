@@ -658,7 +658,66 @@ class CalibrateEK80(CalibrateEK):
 
         return out
 
-    def _compute_cal(self, cal_type) -> xr.Dataset:
+    def _cal_complex_samples_f(
+        self,
+        cal_type: str,
+        frequency_resolution: float = 1000,
+        range_step: float = 0.5,
+    ) -> xr.Dataset:
+        """Calibrate complex broadband EK80 data to Sv(f) or TS(f).
+
+        Parameters
+        ----------
+        cal_type : str
+            ``"Sv_f"`` for frequency-dependent volume backscattering strength,
+            or ``"TS_f"`` for frequency-dependent target strength.
+        frequency_resolution : float, default 1000
+            Frequency spacing in Hz for the output spectral grid.
+        range_step : float, default 0.5
+            Range spacing in meters for the output Sv(f) window centres.
+
+        Returns
+        -------
+        xr.Dataset
+            Prototype calibrated dataset containing ``Sv_f`` or ``TS_f``.
+        """
+
+        if self.waveform_mode not in ("FM", "BB") or self.encode_mode != "complex":
+            raise ValueError(f"{cal_type} is only supported for EK80 FM complex data.")
+
+        if cal_type == "Sv_f":
+            out = xr.Dataset(
+                {
+                    "Sv_f": (
+                        ["channel", "ping_time", "svf_range", "frequency"],
+                        np.full(
+                            (
+                                self.beam.sizes["channel"],
+                                self.beam.sizes["ping_time"],
+                                self.range_meter.sizes["range_sample"],
+                                1,
+                            ),
+                            np.nan,
+                        ),
+                    )
+                },
+                coords={
+                    "channel": self.beam["channel"],
+                    "ping_time": self.beam["ping_time"],
+                    "svf_range": self.range_meter.isel(channel=0, ping_time=0).values,
+                    "frequency": [np.nan],
+                },
+            )
+
+        elif cal_type == "TS_f":
+            raise NotImplementedError("TS_f not implemented yet.")
+
+        else:
+            raise ValueError(f"Unsupported calibration type: {cal_type}")
+
+        return out
+
+    def _compute_cal(self, cal_type, **kwargs) -> xr.Dataset:
         """
         Private method to compute Sv or TS from EK80 data, called by compute_Sv or compute_TS.
 
@@ -678,7 +737,10 @@ class CalibrateEK80(CalibrateEK):
             True if self.waveform_mode == "BB" or self.encode_mode == "complex" else False
         )
 
-        if flag_complex:
+        if cal_type in ("Sv_f", "TS_f"):
+            # Frequency-dependent broadband calibration
+            ds_cal = self._cal_complex_samples_f(cal_type=cal_type, **kwargs)
+        elif flag_complex:
             # Complex samples can be BB or CW
             ds_cal = self._cal_complex_samples(cal_type=cal_type)
         else:
@@ -708,3 +770,31 @@ class CalibrateEK80(CalibrateEK):
             and the corresponding range (``echo_range``) in units meter.
         """
         return self._compute_cal(cal_type="TS")
+
+    def compute_Sv_f(
+        self,
+        frequency_resolution: float = 1000,
+        range_step: float = 0.5,
+    ):
+        """Compute frequency-dependent volume backscattering strength Sv(f).
+
+        Returns
+        -------
+        Sv_f : xr.Dataset
+            A Dataset containing frequency-dependent volume backscattering strength.
+        """
+        return self._compute_cal(
+            cal_type="Sv_f",
+            frequency_resolution=frequency_resolution,
+            range_step=range_step,
+        )
+
+    def compute_TS_f(self):
+        """Compute frequency-dependent target strength TS(f).
+
+        Returns
+        -------
+        TS_f : xr.Dataset
+            A Dataset containing frequency-dependent target strength.
+        """
+        return self._compute_cal(cal_type="TS_f")
