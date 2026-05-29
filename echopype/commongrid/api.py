@@ -443,6 +443,7 @@ def resample_to_geometry(
         A new Dataset where all channels share the same `ping_time`,
         `range_sample`, and `echo_range` as the target.
     """
+
     if (target_channel is not None) == (target_grid is not None):
         raise ValueError("Provide only one of target_channel or target_grid, not both.")
 
