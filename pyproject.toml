@@ -76,12 +76,20 @@ test = [
 ]
 
 docs = [
-    "jupyter-book<2.0",
+    "jupyter-book",
+    "linkify-it-py",
+    "myst-nb",
     "numpydoc",
     "sphinx",
     "sphinx-automodapi",
+    "sphinx-book-theme",
+    "sphinx-comments",
+    "sphinx-copybutton",
+    "sphinx-external-toc",
+    "sphinx-jupyterbook-latex",
     "sphinx-panels",
-    "sphinx_rtd_theme",
+    "sphinx-thebe",
+    "sphinx-togglebutton",
     "sphinxcontrib-mermaid",
 ]
 
