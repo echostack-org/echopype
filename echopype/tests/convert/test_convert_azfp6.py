@@ -6,12 +6,12 @@ This module contains tests that:
 """
 
 import numpy as np
-import pandas as pd
+import pandas as pd  # noqa: F401
 from datetime import datetime, timedelta
 from scipy.io import loadmat
 from echopype import open_raw
 import pytest
-from echopype.convert.parse_azfp6 import ParseAZFP6
+from echopype.convert.parse_azfp6 import ParseAZFP6  # noqa: F401
 
 pytestmark = pytest.mark.integration
 
@@ -38,7 +38,7 @@ def check_platform_required_scalar_vars(echodata):
         assert np.isnan(echodata["Platform"][var])
 
 
-@pytest.mark.skip(reason="tests for comparing AZFP XML parsing with Matlab outputs have not been implemented")
+@pytest.mark.skip(reason="tests for comparing AZFP XML parsing with Matlab outputs have not been implemented")  # noqa: E501
 def test_convert_azfp_02a_xml_parsing(azfp_path):
     """Compare the embedded XML parsed data with Matlab loaded XML file."""
 
@@ -107,7 +107,7 @@ def test_convert_azfp_01a_matlab_derived(azfp_path):
 
     # # check convention-required variables in the Platform group
     azfp_01a_path = azfp_path / '24052113_01A.azfp'
-    azfp_matlab_data_path = azfp_path / 'from_matlab/24052113_01A.mat'
+    azfp_matlab_data_path = azfp_path / 'from_matlab/24052113_01A.mat'  # noqa: F841
     azfp_matlab_output_path = azfp_path / 'from_matlab/24052113_01A_Output.mat'
     
     ds_matlab_output = loadmat(azfp_matlab_output_path)
@@ -135,9 +135,9 @@ def test_convert_azfp_01a_matlab_derived(azfp_path):
     )
 
     #check derived ping_time
-    #NOTE: Only require a second precision accuracy as Matlab has some rounding errors at the nsec level if 
+    #NOTE: Only require a second precision accuracy as Matlab has some rounding errors at the nsec level if  # noqa: E501
     # the *.mat is run on Windows
-    f = lambda x: np.datetime64(datetime.fromordinal(int(x)) + timedelta(days=x%1) - timedelta(days = 366), "[s]")
+    f = lambda x: np.datetime64(datetime.fromordinal(int(x)) + timedelta(days=x%1) - timedelta(days = 366), "[s]")  # noqa: E501, E731
     assert np.array_equal(
         np.vectorize(f)(ds_matlab_output["Output"]['Date'][0][0].squeeze()),
         echodata["Vendor_specific"].ping_time

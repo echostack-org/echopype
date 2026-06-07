@@ -508,11 +508,11 @@ class CalibrateEK80(CalibrateEK):
         """
         Get transceiver gain compensation for BB mode.
 
-        Source: https://github.com/CRIMAC-WP4-Machine-learning/CRIMAC-Raw-To-Svf-TSf/blob/abd01f9c271bb2dbe558c80893dbd7eb0d06fe38/Core/EK80DataContainer.py#L261-L273  # noqa
+        Source: https://github.com/CRIMAC-WP4-Machine-learning/CRIMAC-Raw-To-Svf-TSf/blob/abd01f9c271bb2dbe558c80893dbd7eb0d06fe38/Core/EK80DataContainer.py#L261-L273
         From conversation with Lars Andersen, this correction is based on a longstanding
         empirical formula used for fitting beampattern during calibration, based on
         physically meaningful parameters such as the angle offset and beamwidth.
-        """
+        """  # noqa: E501
         fac_along = (
             np.abs(-self.cal_params["angle_offset_alongship"])
             / (self.cal_params["beamwidth_alongship"] / 2)

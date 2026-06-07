@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from scipy.io import loadmat
 import echopype as ep
-from echopype.calibrate.env_params_old import EnvParams
+from echopype.calibrate.env_params_old import EnvParams  # noqa: F401
 from echopype.calibrate.cal_params import get_vend_cal_params_power
 import xarray as xr
 import dask.array as da
@@ -262,12 +262,12 @@ def test_compute_Sv_ek80_CW_complex_BB_complex(ek80_cal_path, ek80_path):
     Tests calibration for file containing both BB and CW mode data
     with both encoded as complex samples.
     """
-    ek80_raw_path = ek80_cal_path / "2018115-D20181213-T094600.raw"  # rx impedance / rx fs / tcvr type
+    ek80_raw_path = ek80_cal_path / "2018115-D20181213-T094600.raw"  # rx impedance / rx fs / tcvr type  # noqa: E501
     # ek80_raw_path = ek80_path / "D20170912-T234910.raw"  # rx impedance / rx fs / tcvr type
-    # ek80_raw_path = ek80_path / "Summer2018--D20180905-T033113.raw"  # BB only, rx impedance / rx fs / tcvr type
-    # ek80_raw_path = ek80_path / "ar2.0-D20201210-T000409.raw"  # CW only, rx impedance / rx fs / tcvr type
-    # ek80_raw_path = ek80_path / "saildrone/SD2019_WCS_v05-Phase0-D20190617-T125959-0.raw"  # rx impedance / tcvr type
-    # ek80_raw_path = ek80_path / "D20200528-T125932.raw"  # CW only,  WBT MINI, rx impedance / rx fs / tcvr type
+    # ek80_raw_path = ek80_path / "Summer2018--D20180905-T033113.raw"  # BB only, rx impedance / rx fs / tcvr type  # noqa: E501
+    # ek80_raw_path = ek80_path / "ar2.0-D20201210-T000409.raw"  # CW only, rx impedance / rx fs / tcvr type  # noqa: E501
+    # ek80_raw_path = ek80_path / "saildrone/SD2019_WCS_v05-Phase0-D20190617-T125959-0.raw"  # rx impedance / tcvr type  # noqa: E501
+    # ek80_raw_path = ek80_path / "D20200528-T125932.raw"  # CW only,  WBT MINI, rx impedance / rx fs / tcvr type  # noqa: E501
     ed = ep.open_raw(ek80_raw_path, sonar_model="EK80")
     # ds_Sv = ep.calibrate.compute_Sv(
     #     ed, waveform_mode="CW", encode_mode="complex"

@@ -78,7 +78,7 @@ def mask_transient_noise(
 
     Additionally, this code was derived from echopy's numpy single-channel implementation of
     transient noise masking and translated into xarray code:
-    https://github.com/open-ocean-sounding/echopy/blob/master/echopy/processing/mask_transient.py # noqa
+    https://github.com/open-ocean-sounding/echopy/blob/master/echopy/processing/mask_transient.py
 
     Examples
     --------
@@ -116,7 +116,7 @@ def mask_transient_noise(
     do a completely index based nanmean binning operation. This operation is exactly the
     same as applying a mean filter over an image, but in this case, it is applied to an
     Echogram.
-    """
+    """  # noqa: E501
     # Check range variable
     if range_var not in ["echo_range", "depth"]:
         raise ValueError("`range_var` must be either `echo_range` or `depth`.")
@@ -209,8 +209,8 @@ def mask_impulse_noise(
 
     Additionally, code was derived from echopy's numpy single-channel implementation of
     impulse noise masking and translated into xarray code:
-    https://github.com/open-ocean-sounding/echopy/blob/master/echopy/processing/mask_impulse.py # noqa
-    """
+    https://github.com/open-ocean-sounding/echopy/blob/master/echopy/processing/mask_impulse.py
+    """  # noqa: E501
     # Check range variable
     if range_var not in ["echo_range", "depth"]:
         raise ValueError("`range_var` must be either `echo_range` or `depth`.")
@@ -306,8 +306,8 @@ def mask_attenuated_signal(
 
     Additionally, code was derived from echopy's numpy single-channel implementation of
     attenuation signal masking and translated into xarray code:
-    https://github.com/open-ocean-sounding/echopy/blob/master/echopy/processing/mask_attenuated.py # noqa
-    """
+    https://github.com/open-ocean-sounding/echopy/blob/master/echopy/processing/mask_attenuated.py
+    """  # noqa: E501
     # Check range variable
     if range_var not in ["echo_range", "depth"]:
         raise ValueError("`range_var` must be either `echo_range` or `depth`.")

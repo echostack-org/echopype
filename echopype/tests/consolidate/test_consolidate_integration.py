@@ -1,4 +1,4 @@
-import math
+import math  # noqa: F401
 import os
 import dask
 import pathlib
@@ -124,7 +124,7 @@ def test_swap_dims_channel_frequency(test_data_samples):
         assert str(e) == dup_freq_valueerror
 
 
-def _create_array_list_from_echoview_mats(paths_to_echoview_mat: List[pathlib.Path]) -> List[np.ndarray]:
+def _create_array_list_from_echoview_mats(paths_to_echoview_mat: List[pathlib.Path]) -> List[np.ndarray]:  # noqa: E501
     """
     Opens each mat file in ``paths_to_echoview_mat``, selects the first ``ping_time``,
     and then stores the array in a list.
@@ -262,10 +262,10 @@ def test_add_splitbeam_angle(sonar_model, test_path_key, raw_file_name, test_pat
     for chan_ind in range(len(echoview_arr_list)):
 
         # grabs the appropriate ds data to compare against
-        reduced_angle_alongship = ds_Sv.isel(channel=chan_ind, ping_time=0).angle_alongship.dropna("range_sample")
-        reduced_angle_athwartship = ds_Sv.isel(channel=chan_ind, ping_time=0).angle_athwartship.dropna("range_sample")
+        reduced_angle_alongship = ds_Sv.isel(channel=chan_ind, ping_time=0).angle_alongship.dropna("range_sample")  # noqa: E501
+        reduced_angle_athwartship = ds_Sv.isel(channel=chan_ind, ping_time=0).angle_athwartship.dropna("range_sample")  # noqa: E501
 
-        # TODO: make "start" below a parameter in the input so that this is not ad-hoc but something known
+        # TODO: make "start" below a parameter in the input so that this is not ad-hoc but something known  # noqa: E501
         # for some files the echoview data is shifted by one index, here we account for that
         if reduced_angle_alongship.shape == (echoview_arr_list[chan_ind].shape[1], ):
             start = 0
@@ -295,7 +295,7 @@ def test_add_splitbeam_angle_BB_pc(test_path):
     ed = ep.open_raw(test_path["EK80_CAL"] / "2018115-D20181213-T094600.raw", sonar_model="EK80")
 
     # compute Sv as it is required for the split-beam angle calculation
-    ds_Sv = ep.calibrate.compute_Sv(ed, waveform_mode="BB", encode_mode="complex", drop_last_hanning_zero=True)
+    ds_Sv = ep.calibrate.compute_Sv(ed, waveform_mode="BB", encode_mode="complex", drop_last_hanning_zero=True)  # noqa: E501
 
     # add the split-beam angles to Sv dataset
     ds_Sv = ep.consolidate.add_splitbeam_angle(

@@ -28,7 +28,7 @@ def ek80_multiplex_path(test_path):
     return test_path["EK80_MULTIPLEX"]
 
 @pytest.fixture
-def ek80_multiplex_path(test_path):
+def ek80_multiplex_path(test_path):  # noqa: F811
     return test_path["EK80_MULTI"]
 
 
@@ -57,7 +57,7 @@ def test_ek80_transmit_chirp(ek80_cal_path, ek80_ext_path):
         ed["Vendor_specific"].sel(channel=ed["Sonar/Beam_group1"]["channel"])
     )
     tx, tx_time = ep.calibrate.ek80_complex.get_transmit_signal(
-        ed["Sonar/Beam_group1"].sel(channel=ed["Sonar/Beam_group1"]["channel"]), filter_coeff, waveform_mode, fs, drop_last_hanning_zero=True,
+        ed["Sonar/Beam_group1"].sel(channel=ed["Sonar/Beam_group1"]["channel"]), filter_coeff, waveform_mode, fs, drop_last_hanning_zero=True,  # noqa: E501
     )
     tau_effective = ep.calibrate.ek80_complex.get_tau_effective(
         ytx_dict=tx,
@@ -88,7 +88,7 @@ def test_ek80_transmit_chirp(ek80_cal_path, ek80_ext_path):
     # transmit signal
     assert np.allclose(pyecholab_BB["_tx_signal"][0], tx[ch_sel])
     # tau effective
-    # use np.isclose for now since difference is 2.997176e-5 (pyecholab) and 2.99717595e-05 (echopype)
+    # use np.isclose for now since difference is 2.997176e-5 (pyecholab) and 2.99717595e-05 (echopype)  # noqa: E501
     # will see if it causes downstream major differences
     assert np.isclose(tau_effective.sel(channel=ch_sel).data, pyecholab_BB["_tau_eff"][0])
 
@@ -254,7 +254,7 @@ def test_ek80_BB_power_from_complex(
     filter_coeff = ep.calibrate.ek80_complex.get_filter_coeff(
         ed["Vendor_specific"].sel(channel=beam["channel"])
     )
-    tx, _ = ep.calibrate.ek80_complex.get_transmit_signal(beam, filter_coeff, waveform_mode, fs, drop_last_hanning_zero=True)
+    tx, _ = ep.calibrate.ek80_complex.get_transmit_signal(beam, filter_coeff, waveform_mode, fs, drop_last_hanning_zero=True)  # noqa: E501
 
     # Get power from complex samples
     prx = cal_obj._get_power_from_complex(beam=beam, chirp=tx, z_et=z_et, z_er=z_er).compute()
@@ -455,7 +455,7 @@ def test_ek80_CW_complex_Sv_receiver_sampling_freq(ek80_path):
     ],
 )
 @pytest.mark.integration
-def test_ek80_BB_complex_multiplex_NaNs_and_non_NaNs(raw_data_path, target_channel_ping_pattern, ek80_multiplex_path):
+def test_ek80_BB_complex_multiplex_NaNs_and_non_NaNs(raw_data_path, target_channel_ping_pattern, ek80_multiplex_path):  # noqa: E501
     # Extract bb complex multiplex EK80 data
     ed = ep.open_raw(ek80_multiplex_path / raw_data_path, sonar_model="EK80")
 
@@ -530,7 +530,7 @@ def test_ek80_waveform_encode_descr_error(ek80_multiplex_path):
     ed = ep.open_converted(ek80_multiplex_path / "ooi_multiplex.zarr")
     with pytest.raises(
         ValueError,
-        match="Echodata missing `waveform_encode_descr`. Reconvert using the latest Echopype version."
+        match="Echodata missing `waveform_encode_descr`. Reconvert using the latest Echopype version."  # noqa: E501
     ):
         ep.calibrate.compute_Sv(
             ed,
@@ -550,7 +550,7 @@ def test_ek80_waveform_encode_descr_error(ek80_multiplex_path):
         ("EK60", "TS", None, None)
     ],
 )
-def test_assume_single_filter_time(sonar_model, compute_type, waveform_mode, encode_mode, ek80_path):
+def test_assume_single_filter_time(sonar_model, compute_type, waveform_mode, encode_mode, ek80_path):  # noqa: E501
     if sonar_model == "EK80":
         if encode_mode == "complex":
             ek80_raw_path = str(
@@ -571,7 +571,7 @@ def test_assume_single_filter_time(sonar_model, compute_type, waveform_mode, enc
         )
         first_time = vendor_specific_ds.coords["filter_time"].values[0]
         new_times = [first_time, pd.to_datetime(first_time) + pd.Timedelta(seconds=10)]
-        vendor_specific_ds = vendor_specific_ds.assign_coords(filter_time=("filter_time", new_times))
+        vendor_specific_ds = vendor_specific_ds.assign_coords(filter_time=("filter_time", new_times))  # noqa: E501
         ed["Vendor_specific"] = vendor_specific_ds
     else:
         ek60_path = Path(str(ek80_path).replace("80", "60"))
@@ -585,11 +585,11 @@ def test_assume_single_filter_time(sonar_model, compute_type, waveform_mode, enc
     if encode_mode == "complex":
         if compute_type == "Sv":
             ep.calibrate.compute_Sv(
-                ed, waveform_mode=waveform_mode, encode_mode=encode_mode, assume_single_filter_time=True,
+                ed, waveform_mode=waveform_mode, encode_mode=encode_mode, assume_single_filter_time=True,  # noqa: E501
             )
         else:
             ep.calibrate.compute_TS(
-                ed, waveform_mode=waveform_mode, encode_mode=encode_mode, assume_single_filter_time=True,
+                ed, waveform_mode=waveform_mode, encode_mode=encode_mode, assume_single_filter_time=True,  # noqa: E501
             )
     else:
         # Check that the correct value error is raised with encode mode power
@@ -599,11 +599,11 @@ def test_assume_single_filter_time(sonar_model, compute_type, waveform_mode, enc
         ):
             if compute_type == "Sv":
                 ep.calibrate.compute_Sv(
-                    ed, waveform_mode=waveform_mode, encode_mode=encode_mode, assume_single_filter_time=True,
+                    ed, waveform_mode=waveform_mode, encode_mode=encode_mode, assume_single_filter_time=True,  # noqa: E501
                 )
             else:
                 ep.calibrate.compute_TS(
-                    ed, waveform_mode=waveform_mode, encode_mode=encode_mode, assume_single_filter_time=True,
+                    ed, waveform_mode=waveform_mode, encode_mode=encode_mode, assume_single_filter_time=True,  # noqa: E501
                 )
 
 

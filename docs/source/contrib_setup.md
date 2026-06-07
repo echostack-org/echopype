@@ -1,13 +1,13 @@
 (contrib:setup)=
 # Development setup
 
-Thank you for your interests in contributing to Echopype! In this page you will find information on the development workflow, setting up a development environment, and details about testing and documentation.
+Thank you for your interest in contributing to Echopype! In this page you will find information on the development workflow, setting up a development environment, and details about testing and documentation.
 
 
 
 ## Trunk-based development
 We have recently moved to follow [trunk-based development](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development) to streamline the process and reduce repo management overhead.
-The main thing to keep in mind is to set the PR target to the `main` branch in the `upstream` repository (the one sitting under the OSOceanAcoustics GitHub organization).
+The main thing to keep in mind is to set the PR target to the `main` branch in the `upstream` repository (the one sitting under the echostack-org GitHub organization).
 We will no longer use a `dev` branch.
 
 
@@ -16,7 +16,7 @@ We will no longer use a `dev` branch.
 
 To create an environment for developing Echopype, we recommend the following steps:
 
-1. Fork the Echopype repository, clone your fork to your machine, then in `git remote` set your fork as the `origin` and the OSOceanAcoustics repository as `upstream`:
+1. Fork the Echopype repository, clone your fork to your machine, then in `git remote` set your fork as the `origin` and the echostack-org repository as `upstream`:
     ```shell
     # Clone your fork
     git clone https://github.com/YOUR_GITHUB_USERNAME/echopype.git
@@ -24,27 +24,27 @@ To create an environment for developing Echopype, we recommend the following ste
     # Go into the cloned repo folder
     cd echopype
 
-    # Add the OSOceanAcoustics repository as upstream
-    git remote add upstream https://github.com/OSOceanAcoustics/echopype.git
+    # Add the echostack-org repository as upstream
+    git remote add upstream https://github.com/echostack-org/echopype.git
     ```
 
 2. Create a conda environment using the conda-forge channel, and follow the steps below:
     ```shell
-    # Create a conda environment using the supplied requirements files
-    # Note the last one docs/requirements.txt is only required for building docs
-    conda create -c conda-forge -n echopype --yes python=3.12 --file requirements.txt --file requirements-dev.txt --file docs/requirements.txt
+    # Create a conda environment
+    conda create -c conda-forge -n echopype_dev --yes python=3.12
 
-    # Switch to the newly built environment
+    # Activate the environment
     conda activate echopype
 
-    # ipykernel is recommended, in order to use with JupyterLab and IPython for development
-    # We recommend you install JupyterLab separately
+    # Optional but recommended for Jupyter development
     conda install -c conda-forge ipykernel
 
-    # install echopype in editable mode (setuptools "develop mode")
-    # plot is an extra set of requirements that can be used for plotting.
-    # the command will install all the dependencies along with plotting dependencies.
-    pip install -e ".[plot]"
+    # Install echopype in editable mode with development dependencies
+    pip install -e ".[dev,test]"
+
+    # Optional extras
+    # pip install -e ".[plot]"
+    # pip install -e ".[docs]"
     ```
 
 For a fresh local setup, enable the Pooch-based test data fetch before running tests.
@@ -110,7 +110,7 @@ The tests include reading and writing from locally set up (via docker)
 http and [S3 object-storage](https://en.wikipedia.org/wiki/Amazon_S3) sources,
 the latter via [minio](https://minio.io).
 
-[`.ci_helpers/run-test.py`](https://github.com/OSOceanAcoustics/echopype/blob/main/.ci_helpers/run-test.py)
+[`.ci_helpers/run-test.py`](https://github.com/echostack-org/echopype/blob/main/.ci_helpers/run-test.py)
 will execute all tests.
 The entire test suite can take a few minutes to run.
 You can use `run-test.py` to run only tests for specific subpackages
@@ -136,10 +136,10 @@ For `run-test.py` usage information, use the ``-h`` argument:
 
 The echopype development conda environment includes [pre-commit](https://pre-commit.com),
 and useful pre-commit "hooks" have been configured in the
-[.pre-commit-config.yaml file](https://github.com/OSOceanAcoustics/echopype/blob/main/.pre-commit-config.yaml).
+[.pre-commit-config.yaml file](https://github.com/echostack-org/echopype/blob/main/.pre-commit-config.yaml).
 Current hooks include file formatting (linting) checks
 (trailing spaces, trailing lines, JSON and YAML format checks, etc)
-and Python style autoformatters (PEP8 / flake8, `black` and `isort`).
+and Python style autoformatters (`Ruff`, `black` and `isort`).
 
 To run pre-commit hooks locally, run `pre-commit install` before running the
 docker setup-service deploy statement described above.
@@ -157,8 +157,8 @@ CURRENT CI RUNS ENTIRE TEST SUITE FOR PR TO MAIN
 
 echopype makes extensive use of GitHub Actions for continuous integration (CI)
 of unit tests and other code quality controls. Every pull request (PR) triggers the CI.
-See `echopype/.github/workflows <https://github.com/OSOceanAcoustics/echopype/tree/main/.github/workflows>`_,
-especially `pr.yaml <https://github.com/OSOceanAcoustics/echopype/blob/main/.github/workflows/pr.yaml>`_.
+See `echopype/.github/workflows <https://github.com/echostack-org/echopype/tree/main/.github/workflows>`_,
+especially `pr.yaml <https://github.com/echostack-org/echopype/blob/main/.github/workflows/pr.yaml>`_.
 
 The entire test suite can be a bit slow, taking up to 40 minutes or more.
 To mitigate this, the CI default is to run tests only for subpackages that
@@ -195,7 +195,7 @@ jupyter-book build docs/source --path-output docs
 To view the HTML files generated by Jupyter Book, open `docs/_build/html/index.html` in your browser.
 
 For some quick orientation of where things are:
-- The documentation package dependencies are in `docs/requirements.txt`
+- Documentation dependencies are defined in the `docs` optional dependency group in `pyproject.toml`
 - The documentation source files are in the `docs/source` directory
 - The Jupyter Book [configurations](https://jupyterbook.org/en/stable/customize/config.html)
   is in `docs/source/_config.yml`

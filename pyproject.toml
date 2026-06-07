@@ -1,4 +1,3 @@
-
 [build-system]
 requires = [
     "setuptools >= 68",
@@ -7,11 +6,127 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "echopype"
+description = "Enhancing the interoperability and scalability in analyzing ocean sonar data"
+readme = "README.md"
+requires-python = ">=3.11, <3.14"
+license = { text = "Apache License, Version 2.0" }
+authors = [
+    { name = "Wu-Jung Lee", email = "leewujung@gmail.com" },
+]
+maintainers = [
+    { name = "Wu-Jung Lee", email = "leewujung@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
+dynamic = ["version"]
+dependencies = [
+    "aiohttp",
+    "bottleneck",
+    "dask[array,distributed]",
+    "dask-image",
+    "flox>=0.7.2",
+    "fsspec",
+    "geopy",
+    "jinja2",
+    "netCDF4>1.6",
+    "numpy",
+    "pandas",
+    "psutil>=5.9.1",
+    "pynmea2",
+    "pytz",
+    "requests",
+    "s3fs",
+    "scipy",
+    "typing-extensions",
+    "xarray>=2026.01.0",
+    "zarr>=3",
+]
+
+[project.urls]
+Homepage = "https://github.com/echostack-org/echopype"
+Repository = "https://github.com/echostack-org/echopype"
+Documentation = "https://echopype.readthedocs.io"
+
+[project.optional-dependencies]
+plot = [
+    "matplotlib>=3.7",
+    "cmocean",
+]
+
+test = [
+    "moto",
+    "pooch",
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-xdist",
+]
+
+docs = [
+    "jupyter-book",
+    "linkify-it-py",
+    "myst-nb",
+    "numpydoc",
+    "sphinx",
+    "sphinx-automodapi",
+    "sphinx-book-theme",
+    "sphinx-comments",
+    "sphinx-copybutton",
+    "sphinx-external-toc",
+    "sphinx-jupyterbook-latex",
+    "sphinx-panels",
+    "sphinx-thebe",
+    "sphinx-togglebutton",
+    "sphinxcontrib-mermaid",
+]
+
+dev = [
+    "black",
+    "check-manifest",
+    "codespell",
+    "isort",
+    "mypy",
+    "pre-commit",
+    "pylint",
+    "setuptools_scm",
+    "twine",
+    "wheel",
+    "ruff",
+]
+
+[tool.setuptools]
+include-package-data = true
+py-modules = ["_echopype_version"]
+
+[tool.setuptools.packages.find]
+include = ["echopype*"]
+
 [tool.setuptools_scm]
 fallback_version = "unknown"
 local_scheme = "node-and-date"
 write_to = "_echopype_version.py"
 write_to_template = 'version = "{version}"  # noqa'
+
+[tool.pytest.ini_options]
+testpaths = ["echopype/tests"]
+cache_dir = ".cache"
+markers = [
+    "unit: marks tests as unit tests",
+    "integration: marks tests as integration tests",
+]
 
 [tool.black]
 line-length = 100
@@ -24,3 +139,21 @@ include_trailing_comma = true
 force_grid_wrap = 0
 combine_as_imports = true
 line_length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+    "*.ipynb",
+]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = [
+    "E722",
+    "E203",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["echopype"]
+combine-as-imports = true

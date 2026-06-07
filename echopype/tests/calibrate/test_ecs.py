@@ -159,8 +159,8 @@ def test_check_source_channel_order():
 
     ds_out = conform_channel_order(ds_in, freq_ref)
 
-    assert np.all(ds_out["channel"].values == ["chB", "chA", "chC"])  # channel follow those of freq_ref
-    assert not "frequency_nominal" in ds_out  # frequency_nominal has been dropped
+    assert np.all(ds_out["channel"].values == ["chB", "chA", "chC"])  # channel follow those of freq_ref  # noqa: E501
+    assert not "frequency_nominal" in ds_out  # frequency_nominal has been dropped  # noqa: E713
 
 
 @pytest.mark.integration

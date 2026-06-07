@@ -97,7 +97,7 @@ def test_convert_azfp_01a_matlab_raw(azfp_path):
     check_platform_required_scalar_vars(echodata)
 
 
-@pytest.mark.skip(reason="tests for comparing AZFP converted data with Matlab outputs have not been implemented")
+@pytest.mark.skip(reason="tests for comparing AZFP converted data with Matlab outputs have not been implemented")  # noqa: E501
 def test_convert_azfp_01a_matlab_derived():
     """Compare variables derived from raw parsed data with Matlab outputs."""
     # TODO: test derived data

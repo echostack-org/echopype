@@ -55,7 +55,7 @@ def test_env_params_intake_EK60_with_input(ek60_path):
     """
     Test env param intake for EK60 calibration.
     """
-    ed = ep.open_raw(ek60_path / "ncei-wcsd" / "Summer2017-D20170620-T011027.raw", sonar_model="EK60")
+    ed = ep.open_raw(ek60_path / "ncei-wcsd" / "Summer2017-D20170620-T011027.raw", sonar_model="EK60")  # noqa: E501
 
     # Assemble external env param
     env_ext = {"temperature": 10, "salinity": 30, "pressure": 100, "pH": 8.1}
@@ -84,10 +84,10 @@ def test_env_params_intake_EK60_no_input(ek60_path):
     """
     Test default env param extraction for EK60 calibration.
     """
-    ed = ep.open_raw(ek60_path / "ncei-wcsd" / "Summer2017-D20170620-T011027.raw", sonar_model="EK60")
+    ed = ep.open_raw(ek60_path / "ncei-wcsd" / "Summer2017-D20170620-T011027.raw", sonar_model="EK60")  # noqa: E501
     ds_Sv = ep.calibrate.compute_Sv(ed)
     assert np.all(ds_Sv["sound_speed"].values == ed["Environment"]["sound_speed_indicative"].values)
-    assert np.all(ds_Sv["sound_absorption"].values == ed["Environment"]["absorption_indicative"].values)
+    assert np.all(ds_Sv["sound_absorption"].values == ed["Environment"]["absorption_indicative"].values)  # noqa: E501
 
 
 def test_env_params_intake_EK80_no_input(ek80_cal_path):
@@ -130,7 +130,7 @@ def test_env_params_intake_EK80_with_input_scalar(ek80_cal_path):
     # Assemble external env param
     env_ext = {"temperature": 10, "salinity": 30, "pressure": 100, "pH": 8.1}
 
-    ds_Sv = ep.calibrate.compute_Sv(ed, waveform_mode="CW", encode_mode="complex", env_params=env_ext)
+    ds_Sv = ep.calibrate.compute_Sv(ed, waveform_mode="CW", encode_mode="complex", env_params=env_ext)  # noqa: E501
 
     # Manually compute absorption
     cal_obj = ep.calibrate.calibrate_ek.CalibrateEK80(
@@ -180,7 +180,7 @@ def test_env_params_intake_EK80_with_input_da(ek80_cal_path):
                                 'WBT 714597-15 ES333-7C', 'WBT 714605-15 ES200-7C']})
     }
 
-    ds_Sv = ep.calibrate.compute_Sv(ed, waveform_mode="CW", encode_mode="complex", env_params=env_ext)
+    ds_Sv = ep.calibrate.compute_Sv(ed, waveform_mode="CW", encode_mode="complex", env_params=env_ext)  # noqa: E501
 
     assert env_ext["sound_speed"] == ds_Sv["sound_speed"].values
     assert np.all(env_ext["sound_absorption"].values == ds_Sv["sound_absorption"].values)

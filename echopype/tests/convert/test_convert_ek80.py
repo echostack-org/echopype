@@ -9,7 +9,7 @@ import xarray as xr
 from echopype import open_raw, open_converted
 from echopype.calibrate import compute_Sv
 from echopype.convert.parse_ek80 import ParseEK80
-from echopype.convert.set_groups_ek80 import WIDE_BAND_TRANS, PULSE_COMPRESS, FILTER_IMAG, FILTER_REAL, DECIMATION
+from echopype.convert.set_groups_ek80 import WIDE_BAND_TRANS, PULSE_COMPRESS, FILTER_IMAG, FILTER_REAL, DECIMATION  # noqa: E501
 from echopype.utils import log
 from echopype.convert.utils.ek_duplicates import check_unique_ping_time_duplicates
 
@@ -69,20 +69,20 @@ def check_env_xml(echodata):
     for env_var, expected_env_var_values in env_vars.items():
         assert env_var in echodata["Environment"]
         assert echodata["Environment"][env_var].dims == ("time1",)
-        assert all([env_var_value in expected_env_var_values for env_var_value in echodata["Environment"][env_var]])
+        assert all([env_var_value in expected_env_var_values for env_var_value in echodata["Environment"][env_var]])  # noqa: E501
     assert "transducer_sound_speed" in echodata["Environment"]
     assert echodata["Environment"]["transducer_sound_speed"].dims == ("time1",)
-    assert (1480 <= echodata["Environment"]["transducer_sound_speed"]).all() and (echodata["Environment"]["transducer_sound_speed"] <= 1500).all()
+    assert (1480 <= echodata["Environment"]["transducer_sound_speed"]).all() and (echodata["Environment"]["transducer_sound_speed"] <= 1500).all()  # noqa: E501
     assert "sound_velocity_profile" in echodata["Environment"]
-    assert echodata["Environment"]["sound_velocity_profile"].dims == ("time1", "sound_velocity_profile_depth")
-    assert (1470 <= echodata["Environment"]["sound_velocity_profile"]).all() and (echodata["Environment"]["sound_velocity_profile"] <= 1500).all()
+    assert echodata["Environment"]["sound_velocity_profile"].dims == ("time1", "sound_velocity_profile_depth")  # noqa: E501
+    assert (1470 <= echodata["Environment"]["sound_velocity_profile"]).all() and (echodata["Environment"]["sound_velocity_profile"] <= 1500).all()  # noqa: E501
 
     # check env dims
     assert "time1" in echodata["Environment"]
     assert "sound_velocity_profile_depth"
     assert np.array_equal(echodata["Environment"]["sound_velocity_profile_depth"], [1, 1000])
 
-    # check a subset of platform variables. plat_vars specifies a list of possible, expected scalar values
+    # check a subset of platform variables. plat_vars specifies a list of possible, expected scalar values  # noqa: E501
     # for each variable. The variables from the EchoData object are tested against this dictionary
     # to verify their presence and their scalar values
     plat_vars = {
@@ -464,7 +464,7 @@ def test_convert_ek80_no_fil_coeff(ek80_path):
 
 
 @pytest.mark.integration
-@pytest.mark.xfail(reason="Setting MRU1 platform motion data to EchoData Platform group is not yet implemented.")
+@pytest.mark.xfail(reason="Setting MRU1 platform motion data to EchoData Platform group is not yet implemented.")  # noqa: E501
 def test_convert_ek80_mru1(ek80_path):
     """Make sure we can convert EK80 file with MRU1 datagram."""
     ek80_mru1_path = str(ek80_path.joinpath('20231016_Cal_-D20231016-T220322.raw'))
@@ -487,7 +487,7 @@ def test_skip_ec150(ek80_path):
     assert "backscatter_i" in echodata["Sonar/Beam_group1"].data_vars
     assert (
         echodata["Sonar/Beam_group1"].sizes
-        == {'channel_all': 1, 'beam_group': 1, 'channel': 1, 'ping_time': 2, 'range_sample': 115352, 'beam': 4, 'beam_group_index': 1}
+        == {'channel_all': 1, 'beam_group': 1, 'channel': 1, 'ping_time': 2, 'range_sample': 115352, 'beam': 4, 'beam_group_index': 1}  # noqa: E501
     )
 
 
@@ -547,7 +547,7 @@ def test_parse_missing_sound_velocity_profile(ek80_missing_sound_path):
 def test_duplicate_ping_times(caplog, ek80_dupe_ping_path):
     """
     Tests that RAW file with duplicate ping times can be parsed and that the correct warning has been raised.
-    """
+    """  # noqa: E501
     # Turn on logger verbosity
     log.verbose(override=False)
 
@@ -560,7 +560,7 @@ def test_duplicate_ping_times(caplog, ek80_dupe_ping_path):
     )
 
     # Check that no warning is logged since the data for all duplicate pings is unique
-    not_expected_warning = ("All duplicate ping_time entries' will be removed, resulting in potential data loss.")
+    not_expected_warning = ("All duplicate ping_time entries' will be removed, resulting in potential data loss.")  # noqa: E501
     assert not any(not_expected_warning in record.message for record in caplog.records)
 
     # Turn off logger verbosity
@@ -571,7 +571,7 @@ def test_duplicate_ping_times(caplog, ek80_dupe_ping_path):
 def test_check_unique_ping_time_duplicates(caplog, ek80_dupe_ping_path):
     """
     Checks that `check_unique_ping_time_duplicates` raises a warning when the data for duplicate ping times is not unique.
-    """
+    """  # noqa: E501
     # Initialize logger
     logger = log._init_logger(__name__)
 
@@ -581,7 +581,7 @@ def test_check_unique_ping_time_duplicates(caplog, ek80_dupe_ping_path):
     # Open duplicate ping time beam dataset
     ds_data = xr.open_zarr(ek80_dupe_ping_path / "duplicate_beam_ds.zarr")
 
-    # Modify a single entry to ensure that there exists duplicate ping times that do not share the same backscatter data
+    # Modify a single entry to ensure that there exists duplicate ping times that do not share the same backscatter data  # noqa: E501
     ds_data["backscatter_r"][0,0,0] = 0
 
     # Check for ping time duplicates
@@ -671,5 +671,5 @@ def test_ek80_sequence_filter_coeff(ek80_sequence_path):
     # Check that calibration can run and that its channel matches that of the non-NaN vendor
     # specific filter channel since that is the one associated with the complex calibration
     ds_Sv = compute_Sv(ed, waveform_mode="BB", encode_mode="complex")
-    assert ds_Sv["channel"].equals(ed["Vendor_specific"]["WBT_coeffs_imag"].dropna(dim="channel")["channel"])
-    assert ds_Sv["channel"].equals(ed["Vendor_specific"]["PC_coeffs_imag"].dropna(dim="channel")["channel"])
+    assert ds_Sv["channel"].equals(ed["Vendor_specific"]["WBT_coeffs_imag"].dropna(dim="channel")["channel"])  # noqa: E501
+    assert ds_Sv["channel"].equals(ed["Vendor_specific"]["PC_coeffs_imag"].dropna(dim="channel")["channel"])  # noqa: E501

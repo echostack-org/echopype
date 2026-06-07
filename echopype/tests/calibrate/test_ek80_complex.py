@@ -66,8 +66,8 @@ def test_get_vend_filter_EK80(ch_num, filter_len, has_nan):
             sel_vend = vend.sel(channel=ch)
 
             assert np.all(
-                (sel_vend[var_real] + 1j * sel_vend[var_imag]).dropna(dim=f"{filter_name}_filter_n").values
-                == get_vend_filter_EK80(vend, channel_id=ch, filter_name=filter_name, param_type="coeff")
+                (sel_vend[var_real] + 1j * sel_vend[var_imag]).dropna(dim=f"{filter_name}_filter_n").values  # noqa: E501
+                == get_vend_filter_EK80(vend, channel_id=ch, filter_name=filter_name, param_type="coeff")  # noqa: E501
             )
 
             assert sel_vend[var_df].values == get_vend_filter_EK80(

@@ -47,21 +47,21 @@ if os.getenv("USE_POOCH") == "True" and os.getenv("PYTEST_XDIST_WORKER") is None
         "ea640.zip": "sha256:49f70bd6f2355cb3c4c7a5b31fc00f7ae8c8a9ae888f0df1efe759032f9580df",
         "ecs.zip": "sha256:dcc312baa1e9da4488f33bef625b1f86c8a92e3262e34fc90ccd0a4f90d1e313",
         "ek60.zip": "sha256:66735de0ac584ec8a150b54b1a54024a92195f64036134ffdc9d472d7e155bb2",
-        "ek60_calibrate_chunks.zip": "sha256:bf435b1f7fc055f51afd55c4548713ba8e1eb0e919a0d74f4b9dd5f60b7fe327",
-        "ek60_missing_channel_power.zip": "sha256:f3851534cdc6ad3ae1d7c52a11cb279305d316d0086017a305be997d4011e20e",
+        "ek60_calibrate_chunks.zip": "sha256:bf435b1f7fc055f51afd55c4548713ba8e1eb0e919a0d74f4b9dd5f60b7fe327",  # noqa: E501
+        "ek60_missing_channel_power.zip": "sha256:f3851534cdc6ad3ae1d7c52a11cb279305d316d0086017a305be997d4011e20e",  # noqa: E501
         "ek80.zip": "sha256:d3ad4c0d6e07106a9770660e9d751845dec7d2e03837cd931fef1e9b98e0438d",
-        "ek80_bb_complex_multiplex.zip": "sha256:f4b23b872378e5b3b13e5536547fcb094f0230b2b0bef4de89ab18beff6c2d3e",
-        "ek80_bb_with_calibration.zip": "sha256:53f018b6dae051cc86180e13cb3f28848750014dfcf84d97cf2191be2b164ccb",
-        "ek80_duplicate_ping_times.zip": "sha256:11a2dcb5cf113fa1bb03a6724524ac17bdb0db66cb018b0a3ca7cad87067f4bb",
+        "ek80_bb_complex_multiplex.zip": "sha256:f4b23b872378e5b3b13e5536547fcb094f0230b2b0bef4de89ab18beff6c2d3e",  # noqa: E501
+        "ek80_bb_with_calibration.zip": "sha256:53f018b6dae051cc86180e13cb3f28848750014dfcf84d97cf2191be2b164ccb",  # noqa: E501
+        "ek80_duplicate_ping_times.zip": "sha256:11a2dcb5cf113fa1bb03a6724524ac17bdb0db66cb018b0a3ca7cad87067f4bb",  # noqa: E501
         "ek80_ext.zip": "sha256:b04cd5305cea1823045740fe13ae4f12bf2982c0f8614c9871e0d1dcc4b28fd3",
-        "ek80_invalid_env_datagrams.zip": "sha256:dece27d90f30d1a13b56d99350c3254e81622af3199fda0112d3b9e1d7db270c",
-        "ek80_missing_sound_velocity_profile.zip": "sha256:1635585026ae5c4ffdff09ca4d63aeff0b33471c5ee0e1b8a520f87469535852",
+        "ek80_invalid_env_datagrams.zip": "sha256:dece27d90f30d1a13b56d99350c3254e81622af3199fda0112d3b9e1d7db270c",  # noqa: E501
+        "ek80_missing_sound_velocity_profile.zip": "sha256:1635585026ae5c4ffdff09ca4d63aeff0b33471c5ee0e1b8a520f87469535852",  # noqa: E501
         "ek80_new.zip": "sha256:f799cde453762c46ad03fee178c76cd9fbb00eec92a5d1038c32f6a9479b2e57",
-        "ek80_sequence.zip": "sha256:9d8fac39dd31f587d55b9978ba4d2b52bbc85daa85d320ef2ac34b3ae947bb1f",
+        "ek80_sequence.zip": "sha256:9d8fac39dd31f587d55b9978ba4d2b52bbc85daa85d320ef2ac34b3ae947bb1f",  # noqa: E501
         "es60.zip": "sha256:a6c2a15c664ef8b6ac17cb36a28162c271fca361509cf43313038f1bdc9b6c7c",
         "es70.zip": "sha256:a6b4f27f33f09bace26264de6984fdb4111a3a0337bc350c3c1d25c8b3effc7c",
         "es80.zip": "sha256:b37ee01462f46efe055702c20be67d2b8c6b786844b183b16ffc249c7c5ec704",
-        "legacy_datatree.zip": "sha256:820cd252047dbf35fa5fb04a9aafee7f7659e0fe4f7d421d69901c57deb6c9d5",
+        "legacy_datatree.zip": "sha256:820cd252047dbf35fa5fb04a9aafee7f7659e0fe4f7d421d69901c57deb6c9d5",  # noqa: E501
     }
 
     EP = pooch.create(
@@ -222,7 +222,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
             try:
                 # Best effort to extract reason text
                 reason = getattr(rep, "longrepr", "") or ""
-                reason = getattr(reason, "reprcrash", None) and reason.reprcrash.message or str(reason)
+                reason = getattr(reason, "reprcrash", None) and reason.reprcrash.message or str(reason)  # noqa: E501
             except Exception:
                 pass
             tr.write_line(f"  • {rep.nodeid}" + (f"  — {reason}" if reason else ""))

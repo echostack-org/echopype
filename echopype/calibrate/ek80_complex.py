@@ -20,8 +20,8 @@ def tapered_chirp(
     """
     Create the chirp replica following implementation from Lars Anderson.
 
-    Ref source: https://github.com/CRIMAC-WP4-Machine-learning/CRIMAC-Raw-To-Svf-TSf/blob/main/Core/Calculation.py  # noqa
-    """
+    Ref source: https://github.com/CRIMAC-WP4-Machine-learning/CRIMAC-Raw-To-Svf-TSf/blob/main/Core/Calculation.py
+    """  # noqa: E501
 
     tau = transmit_duration_nominal
     f0 = transmit_frequency_start

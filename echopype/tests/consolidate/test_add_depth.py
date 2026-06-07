@@ -53,7 +53,7 @@ def test_ek_use_platform_vertical_offsets_output():
     """
     Test `use_platform_vertical_offsets` outputs.
     """
-    ping_time_da = xr.DataArray(pd.date_range(start="2024-07-04", periods=5, freq="4h"), dims=("ping_time"))
+    ping_time_da = xr.DataArray(pd.date_range(start="2024-07-04", periods=5, freq="4h"), dims=("ping_time"))  # noqa: E501
     time2_da = xr.DataArray(pd.date_range(start="2024-07-04", periods=4, freq="5h"), dims=("time2"))
     platform_ds = xr.Dataset(
         {
@@ -95,7 +95,7 @@ def test_ek_use_platform_angles_output():
     # be 1 (i.e no change).
     # During the 4th time2, the platform is tilted by 45 deg so the echo range scaling should
     # be 1/sqrt(2).
-    ping_time_da = xr.DataArray(pd.date_range(start="2024-07-04", periods=5, freq="4h"), dims=("ping_time"))
+    ping_time_da = xr.DataArray(pd.date_range(start="2024-07-04", periods=5, freq="4h"), dims=("ping_time"))  # noqa: E501
     time2_da = xr.DataArray(pd.date_range(start="2024-07-04", periods=4, freq="5h"), dims=("time2"))
     platform_ds = xr.Dataset(
         {
@@ -110,7 +110,7 @@ def test_ek_use_platform_angles_output():
         },
         coords={"time2": time2_da}
     )
-    echo_range_scaling = ep.consolidate.ek_depth_utils.ek_use_platform_angles(platform_ds, ping_time_da)
+    echo_range_scaling = ep.consolidate.ek_depth_utils.ek_use_platform_angles(platform_ds, ping_time_da)  # noqa: E501
 
     # The two 1.0s here are from the interpolation
     assert np.allclose(echo_range_scaling.values, np.array([0.0, 0.0, 1.0, 1.0, 1/np.sqrt(2)]))
@@ -161,7 +161,7 @@ def test_warning_zero_vector(caplog):
     """
     Test that a warning is logged and NaN is returned for channels with zero beam direction vector.
     """
-    # Create a dataset with two channels: zero vector [0, 0, 0] and nonzero normalized vector [0, 1, 0].
+    # Create a dataset with two channels: zero vector [0, 0, 0] and nonzero normalized vector [0, 1, 0].  # noqa: E501
     beam_ds = xr.Dataset(
         {
             "beam_direction_x": xr.DataArray([0, 0], dims=("channel")),
@@ -193,8 +193,8 @@ def test_warning_zero_vector(caplog):
     [
         ("NBP_B050N-D20180118-T090228.raw", "EK60", {}),
         ("ncei-wcsd/Summer2017-D20170620-T021537.raw", "EK60", {}),
-        ("ncei-wcsd/SH1707/Reduced_D20170826-T205615.raw", "EK80", {"waveform_mode":"BB", "encode_mode":"complex"}),
-        ("ncei-wcsd/SH2106/EK80/Reduced_Hake-D20210701-T131621.raw", "EK80", {"waveform_mode":"CW", "encode_mode":"power"}),
+        ("ncei-wcsd/SH1707/Reduced_D20170826-T205615.raw", "EK80", {"waveform_mode":"BB", "encode_mode":"complex"}),  # noqa: E501
+        ("ncei-wcsd/SH2106/EK80/Reduced_Hake-D20210701-T131621.raw", "EK80", {"waveform_mode":"CW", "encode_mode":"power"}),  # noqa: E501
     ],
 )
 
@@ -222,7 +222,7 @@ def test_ek_depth_utils_dims(relpath, sonar_model, compute_Sv_kwargs, ek60_path,
 
     # Check dimensions for using EK platform angles to compute
     # `platform_echo_range_scaling`.
-    platform_echo_range_scaling = ek_use_platform_angles(platform_ds=ed["Platform"], ping_time_da=ds_Sv["ping_time"])
+    platform_echo_range_scaling = ek_use_platform_angles(platform_ds=ed["Platform"], ping_time_da=ds_Sv["ping_time"])  # noqa: E501
     assert platform_echo_range_scaling.dims == ('ping_time',)
     assert platform_echo_range_scaling["ping_time"].equals(ds_Sv["ping_time"])
 
@@ -353,11 +353,11 @@ def test_add_depth_without_echodata():
     # User input `depth_offset` and `tilt`
     tilt = 15
     ds_Sv_depth = ep.consolidate.add_depth(ds_Sv, depth_offset=water_level, tilt=tilt)
-    assert ds_Sv_depth["depth"].equals(ds_Sv["echo_range"] * np.cos(tilt / 180 * np.pi) + water_level)
+    assert ds_Sv_depth["depth"].equals(ds_Sv["echo_range"] * np.cos(tilt / 180 * np.pi) + water_level)  # noqa: E501
 
     # Inverted echosounder with `depth_offset` and `tilt`
-    ds_Sv_depth = ep.consolidate.add_depth(ds_Sv, depth_offset=water_level, tilt=tilt, downward=False)
-    assert ds_Sv_depth["depth"].equals(-1 * ds_Sv["echo_range"] * np.cos(tilt / 180 * np.pi) + water_level)
+    ds_Sv_depth = ep.consolidate.add_depth(ds_Sv, depth_offset=water_level, tilt=tilt, downward=False)  # noqa: E501
+    assert ds_Sv_depth["depth"].equals(-1 * ds_Sv["echo_range"] * np.cos(tilt / 180 * np.pi) + water_level)  # noqa: E501
 
     # Check history attribute
     history_attribute = ds_Sv_depth["depth"].attrs["history"]
@@ -401,11 +401,11 @@ def test_add_depth_errors(ek80_path):
     [
         ("NBP_B050N-D20180118-T090228.raw", "EK60", {}),
         ("ncei-wcsd/Summer2017-D20170620-T021537.raw", "EK60", {}),
-        ("ncei-wcsd/SH1707/Reduced_D20170826-T205615.raw", "EK80", {"waveform_mode":"BB", "encode_mode":"complex"}),
-        ("ncei-wcsd/SH2106/EK80/Reduced_Hake-D20210701-T131621.raw", "EK80", {"waveform_mode":"CW", "encode_mode":"power"}),
+        ("ncei-wcsd/SH1707/Reduced_D20170826-T205615.raw", "EK80", {"waveform_mode":"BB", "encode_mode":"complex"}),  # noqa: E501
+        ("ncei-wcsd/SH2106/EK80/Reduced_Hake-D20210701-T131621.raw", "EK80", {"waveform_mode":"CW", "encode_mode":"power"}),  # noqa: E501
     ],
 )
-def test_add_depth_EK_with_platform_vertical_offsets(relpath, sonar_model, compute_Sv_kwargs, ek60_path, ek80_path):
+def test_add_depth_EK_with_platform_vertical_offsets(relpath, sonar_model, compute_Sv_kwargs, ek60_path, ek80_path):  # noqa: E501
     """Test `depth` values when using EK Platform vertical offset values to compute it."""
     
     base = ek60_path if sonar_model == "EK60" else ek80_path
@@ -423,7 +423,7 @@ def test_add_depth_EK_with_platform_vertical_offsets(relpath, sonar_model, compu
     # Replace any Platform Vertical Offset NaN values with 0
     ed["Platform"]["water_level"].values = ed["Platform"]["water_level"].fillna(0).values
     ed["Platform"]["vertical_offset"].values = ed["Platform"]["vertical_offset"].fillna(0).values
-    ed["Platform"]["transducer_offset_z"].values = ed["Platform"]["transducer_offset_z"].fillna(0).values
+    ed["Platform"]["transducer_offset_z"].values = ed["Platform"]["transducer_offset_z"].fillna(0).values  # noqa: E501
 
     # Compute `depth` using platform vertical offset values
     ds_Sv_with_depth = ep.consolidate.add_depth(ds_Sv, ed, use_platform_vertical_offsets=True)
@@ -452,10 +452,10 @@ def test_add_depth_EK_with_platform_vertical_offsets(relpath, sonar_model, compu
 @pytest.mark.parametrize("subpath, sonar_model, compute_Sv_kwargs", [
     ("NBP_B050N-D20180118-T090228.raw", "EK60", {}),
     ("ncei-wcsd/Summer2017-D20170620-T021537.raw", "EK60", {}),
-    ("ncei-wcsd/SH1707/Reduced_D20170826-T205615.raw", "EK80", {"waveform_mode": "BB", "encode_mode": "complex"}),
-    ("ncei-wcsd/SH2106/EK80/Reduced_Hake-D20210701-T131621.raw", "EK80", {"waveform_mode": "CW", "encode_mode": "power"}),
+    ("ncei-wcsd/SH1707/Reduced_D20170826-T205615.raw", "EK80", {"waveform_mode": "BB", "encode_mode": "complex"}),  # noqa: E501
+    ("ncei-wcsd/SH2106/EK80/Reduced_Hake-D20210701-T131621.raw", "EK80", {"waveform_mode": "CW", "encode_mode": "power"}),  # noqa: E501
 ])
-def test_add_depth_EK_with_platform_angles(subpath, sonar_model, compute_Sv_kwargs, ek60_path, ek80_path):
+def test_add_depth_EK_with_platform_angles(subpath, sonar_model, compute_Sv_kwargs, ek60_path, ek80_path):  # noqa: E501
     """Test `depth` values when using EK Platform angles to compute it."""
     base = ek60_path if sonar_model == "EK60" else ek80_path
     raw_file = base / subpath
@@ -486,22 +486,22 @@ def test_add_depth_EK_with_platform_angles(subpath, sonar_model, compute_Sv_kwar
     # Check if depth is equal to echo range scaling value * echo range
     assert np.allclose(
         ds_Sv_with_depth["depth"].data,
-        (echo_range_scaling * ds_Sv["echo_range"]).transpose("channel", "ping_time", "range_sample").data, 
+        (echo_range_scaling * ds_Sv["echo_range"]).transpose("channel", "ping_time", "range_sample").data,  # noqa: E501
         equal_nan=True
     )
 
 
-import os
-import pytest
+import os  # noqa: E402, F811
+import pytest  # noqa: E402
 
 @pytest.mark.integration
 @pytest.mark.parametrize("subpath, sonar_model, compute_Sv_kwargs", [
     ("NBP_B050N-D20180118-T090228.raw", "EK60", {}),
     ("ncei-wcsd/Summer2017-D20170620-T021537.raw", "EK60", {}),
-    ("ncei-wcsd/SH1707/Reduced_D20170826-T205615.raw", "EK80", {"waveform_mode": "BB", "encode_mode": "complex"}),
-    ("ncei-wcsd/SH2106/EK80/Reduced_Hake-D20210701-T131621.raw", "EK80", {"waveform_mode": "CW", "encode_mode": "power"}),
+    ("ncei-wcsd/SH1707/Reduced_D20170826-T205615.raw", "EK80", {"waveform_mode": "BB", "encode_mode": "complex"}),  # noqa: E501
+    ("ncei-wcsd/SH2106/EK80/Reduced_Hake-D20210701-T131621.raw", "EK80", {"waveform_mode": "CW", "encode_mode": "power"}),  # noqa: E501
 ])
-def test_add_depth_EK_with_beam_angles(subpath, sonar_model, compute_Sv_kwargs, ek60_path, ek80_path):
+def test_add_depth_EK_with_beam_angles(subpath, sonar_model, compute_Sv_kwargs, ek60_path, ek80_path):  # noqa: E501
     """Test `depth` values when using EK Beam angles to compute it."""
     base = ek60_path if sonar_model == "EK60" else ek80_path
     raw_file = base / subpath
@@ -513,9 +513,9 @@ def test_add_depth_EK_with_beam_angles(subpath, sonar_model, compute_Sv_kwargs, 
     ds_Sv = ep.calibrate.compute_Sv(ed, **compute_Sv_kwargs)
 
     # Replace Beam Angle NaN values
-    ed["Sonar/Beam_group1"]["beam_direction_x"].values = ed["Sonar/Beam_group1"]["beam_direction_x"].fillna(0).values
-    ed["Sonar/Beam_group1"]["beam_direction_y"].values = ed["Sonar/Beam_group1"]["beam_direction_y"].fillna(0).values
-    ed["Sonar/Beam_group1"]["beam_direction_z"].values = ed["Sonar/Beam_group1"]["beam_direction_z"].fillna(1).values
+    ed["Sonar/Beam_group1"]["beam_direction_x"].values = ed["Sonar/Beam_group1"]["beam_direction_x"].fillna(0).values  # noqa: E501
+    ed["Sonar/Beam_group1"]["beam_direction_y"].values = ed["Sonar/Beam_group1"]["beam_direction_y"].fillna(0).values  # noqa: E501
+    ed["Sonar/Beam_group1"]["beam_direction_z"].values = ed["Sonar/Beam_group1"]["beam_direction_z"].fillna(1).values  # noqa: E501
 
     # Compute `depth` using beam angle values
     ds_Sv_with_depth = ep.consolidate.add_depth(ds_Sv, ed, use_beam_angles=True)
@@ -533,14 +533,14 @@ def test_add_depth_EK_with_beam_angles(subpath, sonar_model, compute_Sv_kwargs, 
     # Check if depth is equal to echo range scaling value * echo range
     assert np.allclose(
         ds_Sv_with_depth["depth"].data,
-        (echo_range_scaling * ds_Sv["echo_range"]).transpose("channel", "ping_time", "range_sample").data,
+        (echo_range_scaling * ds_Sv["echo_range"]).transpose("channel", "ping_time", "range_sample").data,  # noqa: E501
         equal_nan=True,
     )
 
     # Replace Beam Angle NaN values
-    ed["Sonar/Beam_group1"]["beam_direction_x"].values = ed["Sonar/Beam_group1"]["beam_direction_x"].fillna(0).values
-    ed["Sonar/Beam_group1"]["beam_direction_y"].values = ed["Sonar/Beam_group1"]["beam_direction_y"].fillna(0).values
-    ed["Sonar/Beam_group1"]["beam_direction_z"].values = ed["Sonar/Beam_group1"]["beam_direction_z"].fillna(1).values
+    ed["Sonar/Beam_group1"]["beam_direction_x"].values = ed["Sonar/Beam_group1"]["beam_direction_x"].fillna(0).values  # noqa: E501
+    ed["Sonar/Beam_group1"]["beam_direction_y"].values = ed["Sonar/Beam_group1"]["beam_direction_y"].fillna(0).values  # noqa: E501
+    ed["Sonar/Beam_group1"]["beam_direction_z"].values = ed["Sonar/Beam_group1"]["beam_direction_z"].fillna(1).values  # noqa: E501
 
     # Compute `depth` using beam angle values
     ds_Sv_with_depth = ep.consolidate.add_depth(ds_Sv, ed, use_beam_angles=True)
@@ -558,7 +558,7 @@ def test_add_depth_EK_with_beam_angles(subpath, sonar_model, compute_Sv_kwargs, 
     # Check if depth is equal to echo range scaling value * echo range
     assert np.allclose(
         ds_Sv_with_depth["depth"].data,
-        (echo_range_scaling * ds_Sv["echo_range"]).transpose("channel", "ping_time", "range_sample").data, 
+        (echo_range_scaling * ds_Sv["echo_range"]).transpose("channel", "ping_time", "range_sample").data,  # noqa: E501
         equal_nan=True
     )
 
@@ -599,7 +599,7 @@ def test_add_depth_EK_with_beam_angles_with_different_beam_groups(
     history_attribute = ds_Sv["depth"].attrs["history"]
     history_attribute_without_time = history_attribute[32:]
     assert history_attribute_without_time == (
-        f". `depth` calculated using: Sv `echo_range`, Echodata `{expected_beam_group_name}` Angles."
+        f". `depth` calculated using: Sv `echo_range`, Echodata `{expected_beam_group_name}` Angles."  # noqa: E501
     )
 
 
@@ -611,7 +611,7 @@ def test_add_depth_with_external_glider_depth_and_tilt_array(azfp_path):
     # Define paths
     raw_file = azfp_path / "rutgers_glider_external_nc/18011107.01A"
     xml_file = azfp_path / "rutgers_glider_external_nc/18011107.XML"
-    glider_file = azfp_path / "rutgers_glider_external_nc/ru32-20180109T0531-profile-sci-delayed-subset.nc"
+    glider_file = azfp_path / "rutgers_glider_external_nc/ru32-20180109T0531-profile-sci-delayed-subset.nc"  # noqa: E501
 
     # Skip if missing
     for p in [raw_file, xml_file, glider_file]:

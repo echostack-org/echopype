@@ -211,7 +211,7 @@ def test_combine_echodata(raw_datasets):
 
             drop_dims = [c_dim for c_dim in concat_dims if c_dim != dim]
 
-            diff_concats.append(xr.concat([ed_subset.drop_dims(drop_dims) for ed_subset in eds_groups], dim=dim,
+            diff_concats.append(xr.concat([ed_subset.drop_dims(drop_dims) for ed_subset in eds_groups], dim=dim,  # noqa: E501
                                 coords="minimal", data_vars="minimal"))
 
         if len(diff_concats) < 1:
@@ -278,11 +278,11 @@ def test_combine_echodata_combined_append(ek60_multi_test_data, test_param, sona
         temp_zarr_dir = tempfile.TemporaryDirectory()
         first_zarr = (
             temp_zarr_dir.name
-            + f"/combined_echodata.zarr"
+            + f"/combined_echodata.zarr"  # noqa: F541
         )
         second_zarr = (
             temp_zarr_dir.name
-            + f"/combined_echodata2.zarr"
+            + f"/combined_echodata2.zarr"  # noqa: F541
         )
         # First combined file
         combined_ed = echopype.combine_echodata(eds[:2])
@@ -359,7 +359,10 @@ def test_combine_echodata_channel_selection():
     # TODO: Once a mock EchoData structure can be easily formed,
     #  we should implement this test.
 
-    pytest.skip("This test will not be implemented until after a mock EchoData object can be created.")
+    pytest.skip(
+    "This test will not be implemented until after "
+    "a mock EchoData object can be created."
+)
 
 
 def test_attr_storage(ek60_test_data):
@@ -448,7 +451,7 @@ def test_combined_echodata_repr(ek60_test_data):
         ├── Provenance: contains metadata about how the SONAR-netCDF4 version of the data were obtained.
         ├── Sonar: contains sonar system metadata and sonar beam groups.
         │   └── Beam_group1: contains backscatter power (uncalibrated) and other beam or channel-specific data, including split-beam angle data when they exist.
-        └── Vendor_specific: contains vendor-specific information about the sonar and the data."""
+        └── Vendor_specific: contains vendor-specific information about the sonar and the data."""  # noqa: E501, F541
     )
 
     assert isinstance(repr(combined), str) is True
@@ -468,7 +471,7 @@ def test_combined_echodata_repr(ek60_test_data):
             [['a', 'b', 'c'], ['a', 'b']],
             None,
             marks=pytest.mark.xfail(strict=True,
-                                    reason="This test should not pass because the channels are not consistent")
+                                    reason="This test should not pass because the channels are not consistent")  # noqa: E501
         ),
         (
             [['a', 'b', 'c'], ['a', 'b', 'c']],
@@ -510,7 +513,7 @@ has_chan_dim_1_beam = {'Top-level': False, 'Environment': False, 'Platform': Tru
 
 has_chan_dim_2_beam = {'Top-level': False, 'Environment': False, 'Platform': True,
                        'Platform/NMEA': False, 'Provenance': False, 'Sonar': True,
-                       'Sonar/Beam_group1': True, 'Sonar/Beam_group2': True, 'Vendor_specific': True}
+                       'Sonar/Beam_group1': True, 'Sonar/Beam_group2': True, 'Vendor_specific': True}  # noqa: E501
 
 expected_1_beam_none = {'Top-level': None, 'Environment': None, 'Platform': None,
                         'Platform/NMEA': None, 'Provenance': None, 'Sonar': None,
@@ -568,7 +571,7 @@ expected_1_beam_a_b_sel = {'Top-level': None, 'Environment': None, 'Platform': [
             ["EK80", "ES80", "EA640"],
             has_chan_dim_2_beam,
             [{'Sonar/Beam_group1': ['a', 'b'], 'Sonar/Beam_group2': ['c', 'd']}],
-            {'Top-level': None, 'Environment': None, 'Platform': ['a', 'b', 'c', 'd'], 'Platform/NMEA': None,
+            {'Top-level': None, 'Environment': None, 'Platform': ['a', 'b', 'c', 'd'], 'Platform/NMEA': None,  # noqa: E501
              'Provenance': None, 'Sonar': ['a', 'b', 'c', 'd'], 'Sonar/Beam_group1': ['a', 'b'],
              'Sonar/Beam_group2': ['c', 'd'], 'Vendor_specific': ['a', 'b', 'c', 'd']}
         ),
@@ -576,13 +579,13 @@ expected_1_beam_a_b_sel = {'Top-level': None, 'Environment': None, 'Platform': [
             ["EK80", "ES80", "EA640"],
             has_chan_dim_2_beam,
             [{'Sonar/Beam_group1': ['a', 'b'], 'Sonar/Beam_group2': ['b', 'c', 'd']}],
-            {'Top-level': None, 'Environment': None, 'Platform': ['a', 'b', 'c', 'd'], 'Platform/NMEA': None,
+            {'Top-level': None, 'Environment': None, 'Platform': ['a', 'b', 'c', 'd'], 'Platform/NMEA': None,  # noqa: E501
              'Provenance': None, 'Sonar': ['a', 'b', 'c', 'd'], 'Sonar/Beam_group1': ['a', 'b'],
              'Sonar/Beam_group2': ['b', 'c', 'd'], 'Vendor_specific': ['a', 'b', 'c', 'd']}
         ),
     ],
     ids=["EK60_no_sel", "EK80_no_sel_1_beam", "EK80_no_sel_2_beam", "EK60_chan_sel",
-         "EK80_chan_sel_1_beam", "EK80_list_chan_sel_2_beam", "EK80_dict_chan_sel_2_beam_diff_beam_group_chans",
+         "EK80_chan_sel_1_beam", "EK80_list_chan_sel_2_beam", "EK80_dict_chan_sel_2_beam_diff_beam_group_chans",  # noqa: E501
          "EK80_dict_chan_sel_2_beam_overlap_beam_group_chans"]
 )
 def test_create_channel_selection_dict(sonar_model, has_chan_dim,
@@ -601,7 +604,7 @@ def test_create_channel_selection_dict(sonar_model, has_chan_dim,
     for model in sonar_model:
         for usr_sel_chan in user_channel_selection:
 
-            channel_selection_dict = _create_channel_selection_dict(model, has_chan_dim, usr_sel_chan)
+            channel_selection_dict = _create_channel_selection_dict(model, has_chan_dim, usr_sel_chan)  # noqa: E501
             assert channel_selection_dict == expected_dict
 
 @pytest.mark.parametrize(

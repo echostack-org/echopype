@@ -170,8 +170,8 @@ def range_mod_TVG_EK(
     TVG correction factor changes depending when the echo recording starts
     wrt when the transmit signal is sent out.
     This depends on whether it is Ex60 or Ex80 style hardware
-    ref: https://github.com/CI-CMG/pyEcholab/blob/RHT-EK80-Svf/echolab2/instruments/EK80.py#L4297-L4308  # noqa
-    """
+    ref: https://github.com/CI-CMG/pyEcholab/blob/RHT-EK80-Svf/echolab2/instruments/EK80.py#L4297-L4308
+    """  # noqa: E501
 
     def mod_Ex60():
         # 2-sample shift in the beginning

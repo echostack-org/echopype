@@ -314,7 +314,7 @@ def compute_NASC(
     Notes
     -----
     The NASC computation implemented here generally corresponds to the Echoview algorithm PRC_NASC
-    https://support.echoview.com/WebHelp/Reference/Algorithms/Analysis_Variables/PRC_ABC_and_PRC_NASC.htm#PRC_NASC  # noqa
+    https://support.echoview.com/WebHelp/Reference/Algorithms/Analysis_Variables/PRC_ABC_and_PRC_NASC.htm#PRC_NASC
     The difference is that since in echopype masking of the Sv dataset is done explicitly using
     functions in the ``mask`` subpackage, the computation only involves computing the
     mean Sv and the mean height within each cell, where some Sv "pixels" may have been
@@ -325,8 +325,8 @@ def compute_NASC(
     Therefore, both regular and irregular horizontal distance in the Sv dataset are allowed.
     This is different from Echoview's assumption of constant ping rate, vessel speed, and sample
     thickness when computing mean Sv
-    (see https://support.echoview.com/WebHelp/Reference/Algorithms/Analysis_Variables/Sv_mean.htm#Conversions).  # noqa
-    """
+    (see https://support.echoview.com/WebHelp/Reference/Algorithms/Analysis_Variables/Sv_mean.htm#Conversions).
+    """  # noqa: E501
     # Set range_var to be 'depth'
     range_var = "depth"
 

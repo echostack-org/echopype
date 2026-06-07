@@ -16,7 +16,7 @@ env:
   NUM_WORKERS: auto
   USE_POOCH: "True"
   ECHOPYPE_DATA_VERSION: v0.11.1a2
-  ECHOPYPE_DATA_BASEURL: https://github.com/OSOceanAcoustics/echopype/releases/download/{version}/
+  ECHOPYPE_DATA_BASEURL: https://github.com/echostack-org/echopype/releases/download/{version}/
   XDG_CACHE_HOME: ${{ github.workspace }}/.cache
 
 jobs:
@@ -47,17 +47,8 @@ jobs:
       - name: Set environment variables
         run: echo "PYTHON_VERSION=${{ matrix.python-version }}" >> $GITHUB_ENV
 
-      - name: Remove docker-compose python
-        run: sed -i "/docker-compose/d" requirements-dev.txt
-
-      - name: Install dev tools
-        run: python -m pip install -r requirements-dev.txt
-
-      - name: Install echopype
-        run: python -m pip install -e ".[plot]"
-
-      - name: Install pooch (needed by conftest)
-        run: python -m pip install pooch
+      - name: Install echopype with test dependencies
+        run: python -m pip install -e ".[test,plot]"
 
       - name: Start memory monitor
         shell: bash
@@ -155,11 +146,8 @@ jobs:
       - name: Set environment variables
         run: echo "PYTHON_VERSION=${{ matrix.python-version }}" >> $GITHUB_ENV
 
-      - name: Remove docker-compose python
-        run: sed -i "/docker-compose/d" requirements-dev.txt
-
-      - name: Install dev tools
-        run: python -m pip install -r requirements-dev.txt
+      - name: Install echopype with test dependencies
+        run: python -m pip install -e ".[test,plot]"
 
       - name: Cache echopype test data
         uses: actions/cache@v5
@@ -173,9 +161,6 @@ jobs:
       - name: Install error reporter
         if: ${{ matrix.python-version == '3.13' }}
         run: python -m pip install pytest-github-actions-annotate-failures
-
-      - name: Install echopype
-        run: python -m pip install -e ".[plot]"
 
       - name: Print installed packages
         run: python -m pip list
@@ -270,18 +255,14 @@ jobs:
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
-      - name: Install deps (dev + pooch + s3)
+      - name: Install echopype with test dependencies
         run: |
-          python -m pip install -r requirements-dev.txt
-          python -m pip install "pooch>=1.8" fsspec s3fs
-          python -m pip install pytest pytest-cov pytest-xdist pytest-mock
+          python -m pip install -e ".[test,plot]"
+          python -m pip install "pooch>=1.8" s3fs
 
       - name: Install error reporter
         if: ${{ matrix.python-version == '3.13' }}
         run: python -m pip install pytest-github-actions-annotate-failures
-
-      - name: Install echopype
-        run: python -m pip install -e ".[plot]"
 
       - name: Pre-fetch all Pooch assets
         run: python -m pytest --collect-only -q

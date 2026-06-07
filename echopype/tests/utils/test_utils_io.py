@@ -181,7 +181,7 @@ def mock_unix_return(*args: Tuple[str, ...]):
     ]
 )
 @pytest.mark.unit
-def test_env_indep_joinpath_mock_return(save_path: str, is_windows: bool, is_cloud: bool, monkeypatch):
+def test_env_indep_joinpath_mock_return(save_path: str, is_windows: bool, is_cloud: bool, monkeypatch):  # noqa: E501
     """
     Tests the function ``env_indep_joinpath`` using a mock return on varying OS and cloud
     path scenarios by adding a folder and a file to the input ``save_path``.
@@ -277,13 +277,13 @@ def test_env_indep_joinpath_os_dependent(save_path: str, is_windows: bool, is_cl
         pytest.param(42, {}, None,
                      marks=pytest.mark.xfail(
                          strict=True,
-                         reason='This test should fail because source_ds is not of the correct type.')
+                         reason='This test should fail because source_ds is not of the correct type.')  # noqa: E501
                      ),
         pytest.param(xr.DataArray(), {}, None),
         pytest.param({}, 42, None,
                      marks=pytest.mark.xfail(
                          strict=True,
-                         reason='This test should fail because storage_options is not of the correct type.')
+                         reason='This test should fail because storage_options is not of the correct type.')  # noqa: E501
                      ),
         (xr.Dataset(attrs={"test": 42}), {}, None),
         (os.path.join('folder', 'new_test.nc'), {}, 'netcdf4'),

@@ -26,14 +26,14 @@ pytestmark = [
             "EK60",
             ("Winter2017-D20170115-T150122.raw", None),
             {},
-            # marks=pytest.mark.skipif(sys.platform == "win32", reason="Test data not available on windows tests"),
+            # marks=pytest.mark.skipif(sys.platform == "win32", reason="Test data not available on windows tests"),  # noqa: E501
         ),
         pytest.param(
             "AZFP",
             "AZFP",
             ("17082117.01A", "17041823.XML"),
             {"longitude": -60.0, "latitude": 45.0, "salinity": 27.9, "pressure": 59},
-            # marks=pytest.mark.skipif(sys.platform == "win32", reason="Test data not available on windows tests"),
+            # marks=pytest.mark.skipif(sys.platform == "win32", reason="Test data not available on windows tests"),  # noqa: E501
         ),
     ],
 )
@@ -81,7 +81,7 @@ def test_raw_to_mvbs(
                 "time": (["time"], np.array([ed["Sonar/Beam_group1"]["ping_time"].values.min()]))
             },
         )
-        ed.update_platform(point_ds, variable_mappings={"latitude": "latitude", "longitude": "longitude"})
+        ed.update_platform(point_ds, variable_mappings={"latitude": "latitude", "longitude": "longitude"})  # noqa: E501
         _presence_test(ed["Top-level"], "Level 1A")
     else:
         _absence_test(ed["Top-level"])

@@ -1,5 +1,5 @@
 import math
-import sys
+import sys  # noqa: F401
 
 import pytest
 import numpy as np
@@ -26,7 +26,7 @@ def test_sel_nmea_value_error():
     Check that the appropriate ValueError is raised when nmea_sentence!=None and datagram_type!=None.
     This would imply NMEA sentence selection of location variable not from the NMEA datagrams, which
     is wrong.
-    """
+    """  # noqa: E501
     # Check if the expected error is logged
     with pytest.raises(ValueError) as exc_info:
         # Pass in non-None values for nmea_sentence and datagram_type and leave the rest as
@@ -37,7 +37,7 @@ def test_sel_nmea_value_error():
             datagram_type="MRU1",
             nmea_sentence="GGA"
         )
-    assert ("If datagram_type is not `None`, then `nmea_sentence` cannot be specified.") == str(exc_info.value)
+    assert ("If datagram_type is not `None`, then `nmea_sentence` cannot be specified.") == str(exc_info.value)  # noqa: E501
 
 
 @pytest.mark.unit
@@ -45,7 +45,7 @@ def test_add_location_datagram_type_specified_not_ek_error(azfp_path):
     """
     Check that the appropriate ValueError is raised when datagram_type is passed in and EchoData sonar model is
     not EK.
-    """
+    """  # noqa: E501
     # Compute raw and compute Sv
     ed = ep.open_raw(
         azfp_path / "17082117.01A",
@@ -71,7 +71,7 @@ def test_add_location_datagram_type_specified_not_ek_error(azfp_path):
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    ["location_type", "sonar_model", "path_model", "raw_and_xml_paths", "lat_lon_name_dict", "extras"],
+    ["location_type", "sonar_model", "path_model", "raw_and_xml_paths", "lat_lon_name_dict", "extras"],  # noqa: E501
     [
         (
             "empty-location",
@@ -170,7 +170,7 @@ def test_add_location(
                 ]:
                     position_var = ed["Platform"][ed_position]
                     if nmea_sentence:
-                        position_var = position_var[ed["Platform"]["sentence_type"] == nmea_sentence]
+                        position_var = position_var[ed["Platform"]["sentence_type"] == nmea_sentence]  # noqa: E501
                     position_interp = position_var.interp(
                         {"time1": ds_test["ping_time"]},
                         method="linear",
@@ -269,7 +269,7 @@ def test_add_location_time_duplicates_value_error(
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    ("raw_path, sonar_model, datagram_type, parse_idx, compute_Sv_kwargs, error_type, expected_error_message"),
+    ("raw_path, sonar_model, datagram_type, parse_idx, compute_Sv_kwargs, error_type, expected_error_message"),  # noqa: E501
     [
         (
             "D20170912-T234910.raw",
@@ -310,7 +310,7 @@ def test_add_location_time_duplicates_value_error(
     ],
 )
 def test_add_location_lat_lon_missing_all_NaN_errors(
-    ek80_path, raw_path, sonar_model, datagram_type, parse_idx, compute_Sv_kwargs, error_type, expected_error_message
+    ek80_path, raw_path, sonar_model, datagram_type, parse_idx, compute_Sv_kwargs, error_type, expected_error_message  # noqa: E501
 ):
     """Tests for lat lon missing or all NaN values errors."""
     # Open raw and compute the Sv dataset
@@ -419,7 +419,7 @@ def test_add_location_lat_lon_missing_all_NaN_errors(
     ],
 )
 def test_add_location_lat_lon_0_NaN_warnings(
-    ek80_path, raw_path, sonar_model, datagram_type, parse_idx, compute_Sv_kwargs, expected_warnings, caplog
+    ek80_path, raw_path, sonar_model, datagram_type, parse_idx, compute_Sv_kwargs, expected_warnings, caplog  # noqa: E501
 ):
     """Tests for lat lon 0 and NaN value warnings."""
     # Open raw and compute the Sv dataset

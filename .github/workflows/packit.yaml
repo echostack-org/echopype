@@ -11,7 +11,7 @@ jobs:
   build-artifact:
     name: Build echopype package
     runs-on: ubuntu-22.04
-    if: github.repository == 'OSOceanAcoustics/echopype'
+    if: github.repository == 'echostack-org/echopype'
     steps:
     - name: Checkout
       uses: actions/checkout@v6
@@ -24,8 +24,8 @@ jobs:
       with:
         python-version: 3.12
 
-    - name: Install dependencies
-      run: python -m pip install setuptools wheel
+    - name: Install build frontend
+      run: python -m pip install --upgrade pip build
 
     # This step is only necessary for testing purposes and for TestPyPI
     - name: Fix up version string for TestPyPI
@@ -38,7 +38,7 @@ jobs:
 
     - name: Build source and wheel distributions
       run: |
-        python setup.py sdist bdist_wheel
+        python -m build
         echo ""
         echo "Generated files:"
         ls -lh dist/

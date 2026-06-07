@@ -314,7 +314,7 @@ def test_regrid_mask_errors():
 
     # Test errors
 
-    with pytest.raises(ValueError, match="Passing in reindex=.*only allowed when method='map_reduce'"):
+    with pytest.raises(ValueError, match="Passing in reindex=.*only allowed when method='map_reduce'"):  # noqa: E501
         regrid_mask(
             mask,
             range_da=mask["depth"],
@@ -336,21 +336,21 @@ def test_regrid_mask_errors():
             func="invalid_func",
         )
 
-    with pytest.raises(ValueError, match="Mask must have only 2 dimensions unless 'third_dim' is specified."):
+    with pytest.raises(ValueError, match="Mask must have only 2 dimensions unless 'third_dim' is specified."):  # noqa: E501
         regrid_mask(
             mask.expand_dims("region_id"),
             range_da=mask["depth"],
             third_dim=None,
         )
     
-    with pytest.raises(ValueError, match="Mask must contain the specified 'region_id' as a dimension."):
+    with pytest.raises(ValueError, match="Mask must contain the specified 'region_id' as a dimension."):  # noqa: E501
         regrid_mask(
             mask,
             range_da=mask["depth"],
             third_dim="region_id",
         )
 
-    with pytest.raises(ValueError, match="Mask must have 3 dimensions when 'third_dim' is specified."):
+    with pytest.raises(ValueError, match="Mask must have 3 dimensions when 'third_dim' is specified."):  # noqa: E501
         regrid_mask(
             mask.expand_dims("region_id_1").expand_dims("region_id_2"),
             range_da=mask["depth"],

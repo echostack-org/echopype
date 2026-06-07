@@ -18,7 +18,7 @@ import pytest
 import xarray as xr
 import numpy as np
 
-from utils import get_mock_echodata, check_consolidated
+from utils import get_mock_echodata, check_consolidated  # noqa: F401
 
 @pytest.fixture
 def ek60_path(test_path):
@@ -257,7 +257,7 @@ class TestEchoData:
             ├── Provenance: contains metadata about how the SONAR-netCDF4 version of the data were obtained.
             ├── Sonar: contains sonar system metadata and sonar beam groups.
             │   └── Beam_group1: contains backscatter power (uncalibrated) and other beam or channel-specific data, including split-beam angle data when they exist.
-            └── Vendor_specific: contains vendor-specific information about the sonar and the data."""
+            └── Vendor_specific: contains vendor-specific information about the sonar and the data."""  # noqa: E501
         )
         ed = self.create_ed(converted_raw_path=converted_zarr)
         actual = "\n".join(x.rstrip() for x in repr(ed).split("\n"))
@@ -269,7 +269,7 @@ class TestEchoData:
         assert hasattr(ed, "_repr_html_")
         html_repr = ed._repr_html_().strip()
         assert (
-            f"""<div class="xr-obj-type">EchoData: standardized raw data from {zarr_path_string}</div>"""
+            f"""<div class="xr-obj-type">EchoData: standardized raw data from {zarr_path_string}</div>"""  # noqa: E501
             in html_repr
         )
 
@@ -332,7 +332,7 @@ class TestEchoData:
         # clean up the zarr file
         shutil.rmtree(zarr_path)
 
-# TODO: Add test_open_converted with zarr v3 test data since format changed. open_converted works but needs a test.
+# TODO: Add test_open_converted with zarr v3 test data since format changed. open_converted works but needs a test.  # noqa: E501
 
 @pytest.mark.integration
 def test_open_converted(ek60_converted_zarr, minio_bucket):  # noqa
@@ -381,7 +381,7 @@ def test_open_converted(ek60_converted_zarr, minio_bucket):  # noqa
 #                 "temperature": ("time3", np.arange(50)),
 #             },
 #             coords={
-#                 "time3": np.arange("2017-06-20T01:00", "2017-06-20T01:25", np.timedelta64(30, "s"), dtype="datetime64[ns]")
+#                 "time3": np.arange("2017-06-20T01:00", "2017-06-20T01:25", np.timedelta64(30, "s"), dtype="datetime64[ns]")  # noqa: E501
 #             }
 #         ),
 #         data_kind="stationary"
@@ -411,7 +411,7 @@ def test_open_converted(ek60_converted_zarr, minio_bucket):  # noqa
 #         ),
 #         data_kind="mobile"
 #     )
-#     if "latitude" in ed["Platform"] and "longitude" in ed["Platform"] and sonar_model != "AD2CP" and not np.isnan(ed["Platform"]["time1"]).all():
+#     if "latitude" in ed["Platform"] and "longitude" in ed["Platform"] and sonar_model != "AD2CP" and not np.isnan(ed["Platform"]["time1"]).all():  # noqa: E501
 #         ed.compute_range(mobile_env_params, azfp_cal_type, ek_waveform_mode)
 #     else:
 #         try:
