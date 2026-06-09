@@ -805,7 +805,7 @@ def test_resample_with_grid(request, er_type, calculate_total_energy):
         err_msg="Total energy was not conserved during regridding!"
     )
 
-# Integration test with real EK80 data
+# Integration test with EK80 data
 
 @pytest.mark.integration
 def test_range_spacing(ek80_path):
