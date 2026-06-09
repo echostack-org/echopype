@@ -3,6 +3,7 @@ Functions for enhancing the spatial and temporal coherence of data.
 """
 
 import logging
+import warnings
 from typing import Literal
 
 import numpy as np
@@ -444,6 +445,22 @@ def resample_to_geometry(
         `range_sample`, and `echo_range` as the target.
     """
 
+    LOG_VARIABLES = {"Sv", "Sp", "TS"}
+    angle_variables = {
+        "angle_alongship",
+        "angle_athwartship",
+    }
+
+    if target_variable in angle_variables or "angle" in target_variable.lower():
+        warnings.warn(
+            f"Resampling '{target_variable}' with overlap-weighted averaging. "
+            "This matches the range geometry, but angle values may not be physically "
+            "equivalent to directly averaged acoustic power variables. Interpret the "
+            "resampled angle values with caution.",
+            UserWarning,
+            stacklevel=2,
+        )
+
     if (target_channel is not None) == (target_grid is not None):
         raise ValueError("Provide only one of target_channel or target_grid, not both.")
 
@@ -488,7 +505,7 @@ def resample_to_geometry(
 
         ds_source = da_var.sel(channel=channel)
 
-        if target_variable == "Sv":
+        if target_variable in LOG_VARIABLES:
             source_linear = _log2lin(ds_source)
         else:
             source_linear = ds_source
@@ -510,7 +527,7 @@ def resample_to_geometry(
 
         # Convert back to log domain
         result_linear = result_linear.where(result_linear > 0)
-        if target_variable == "Sv":
+        if target_variable in LOG_VARIABLES:
             resample_variable = _lin2log(result_linear)
         else:
             resample_variable = result_linear
