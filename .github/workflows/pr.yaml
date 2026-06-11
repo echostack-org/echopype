@@ -78,7 +78,7 @@ jobs:
           path: ci_monitor/memory_usage.csv
 
       - name: Upload code coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           flags: unit
@@ -226,7 +226,7 @@ jobs:
           path: ci_monitor/memory_usage.csv
 
       - name: Upload code coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           flags: integration
@@ -304,7 +304,7 @@ jobs:
           path: ci_monitor/memory_usage.csv
 
       - name: Upload code coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           flags: unittests

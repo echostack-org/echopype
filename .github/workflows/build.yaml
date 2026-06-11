@@ -51,7 +51,7 @@ jobs:
             --cov=echopype --cov-report=xml --log-cli-level=WARNING --disable-warnings
 
       - name: Upload code coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           flags: unit
@@ -187,7 +187,7 @@ jobs:
           --cov=echopype --cov-report=xml --log-cli-level=WARNING --disable-warnings
 
       - name: Upload code coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           flags: integration

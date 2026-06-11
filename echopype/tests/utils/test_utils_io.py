@@ -325,3 +325,44 @@ def test_init_ep_dir(monkeypatch):
     assert echopype.utils.io.ECHOPYPE_DIR.exists() is True
 
     temp_user_dir.cleanup()
+
+
+def test_check_file_permissions_fsmap_writes_inside_target(tmp_path):
+    """check_file_permissions must probe inside the target store, not its parent (#1098)."""
+    from echopype.utils.io import check_file_permissions
+
+    fs = fsspec.filesystem('file')
+    target = tmp_path / 'combined_files'
+    target.mkdir()
+
+    # record where the probe file is opened (it is deleted again, so it can't
+    # be observed after the fact)
+    opened = []
+    real_open = fs.open
+
+    def _record_open(path, *args, **kwargs):
+        opened.append(path)
+        return real_open(path, *args, **kwargs)
+
+    fs.open = _record_open
+    check_file_permissions(fsspec.FSMap(str(target), fs))
+
+    assert opened
+    # the probe path uses fsspec's forward-slash convention; normalize both
+    # sides so the parent-dir check is OS-independent (Windows uses os.sep '\\').
+    target_dir = str(target).replace(os.sep, '/')
+    assert all(p.replace(os.sep, '/').rsplit('/', 1)[0] == target_dir for p in opened)
+    assert list(target.iterdir()) == []
+
+
+def test_check_file_permissions_fsmap_creates_missing_store(tmp_path):
+    """A not-yet-created store should be created and pass the permission check (#1098)."""
+    from echopype.utils.io import check_file_permissions
+
+    fs = fsspec.filesystem('file')
+    target = tmp_path / 'new_store.zarr'
+
+    check_file_permissions(fsspec.FSMap(str(target), fs))
+
+    assert target.is_dir()
+    assert list(target.iterdir()) == []
