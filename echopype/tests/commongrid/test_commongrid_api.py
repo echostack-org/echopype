@@ -1071,8 +1071,8 @@ def test_resample_matches_echoview_match_geometry(test_path):
 @pytest.mark.integration
 def test_resample_shared_depth_and_range_geometry(test_path):
     """
-    Test that all channels share the same echo_range and depth geometry
-    after resampling to the 200 kHz channel.
+    Test that channels share the same echo_range geometry after resampling,
+    and the same depth geometry after applying add_depth().
     """
 
     raw_path = (
@@ -1101,6 +1101,9 @@ def test_resample_shared_depth_and_range_geometry(test_path):
         target_variable="Sv",
         target_channel=target_channel,
     )
+
+    # Verify add_depth() remains compatible with the resampled output
+    ds_regridded = ep.consolidate.add_depth(ds_regridded)
 
     ref_echo_range = ds_regridded["echo_range"].sel(channel=target_channel)
     ref_depth = ds_regridded["depth"].sel(channel=target_channel)
