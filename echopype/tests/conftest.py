@@ -62,7 +62,7 @@ if os.getenv("USE_POOCH") == "True" and os.getenv("PYTEST_XDIST_WORKER") is None
         "es70.zip": "sha256:a6b4f27f33f09bace26264de6984fdb4111a3a0337bc350c3c1d25c8b3effc7c",
         "es80.zip": "sha256:b37ee01462f46efe055702c20be67d2b8c6b786844b183b16ffc249c7c5ec704",
         "legacy_datatree.zip": "sha256:820cd252047dbf35fa5fb04a9aafee7f7659e0fe4f7d421d69901c57deb6c9d5",  # noqa: E501
-        "resample_to_geometry_example_data.zip": "sha256:7e4bca9a7e87ff70a7685eb4d9dfa52e7ac16e1acbeeb83601a79be5a6ac182c",
+        "resample_to_geometry_example_data.zip": "sha256:1a45e3ac31ef16d742b16155dc4b7f62511abd8d25547f55fcd9146446f60d07",
     }
 
     EP = pooch.create(
