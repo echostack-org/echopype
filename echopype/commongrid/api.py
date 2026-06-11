@@ -446,17 +446,15 @@ def resample_to_geometry(
     """
 
     LOG_VARIABLES = {"Sv", "Sp", "TS"}
-    angle_variables = {
-        "angle_alongship",
-        "angle_athwartship",
-    }
 
-    if target_variable in angle_variables or "angle" in target_variable.lower():
+    if target_variable != "Sv":
         warnings.warn(
             f"Resampling '{target_variable}' with overlap-weighted averaging. "
-            "This matches the range geometry, but angle values may not be physically "
-            "equivalent to directly averaged acoustic power variables. Interpret the "
-            "resampled angle values with caution.",
+            "This function is primarily intended and validated for Sv. "
+            "Variables such as Sp and TS are resampled in the linear domain, "
+            "but interpretation should be done with caution. "
+            "Angle variables are resampled geometrically and may not be "
+            "physically equivalent to recomputing angles from complex data.",
             UserWarning,
             stacklevel=2,
         )

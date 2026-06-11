@@ -17,7 +17,7 @@ from echopype.tests.commongrid.conftest import get_NASC_echoview
 
 @pytest.fixture
 def ek80_path(test_path):
-    return test_path['EK80']
+    return test_path["EK80"]
 
 @pytest.fixture
 def calculate_total_energy():
@@ -848,20 +848,20 @@ def test_range_spacing(ek80_path):
 def test_resample_log_variable_sp(ds_Sv_echo_range_regular):
     """
     Test that Sp variables are resampled through the same
-    linear-domain averaging pathway as Sv.
+    linear-domain averaging pathway as Sv, with a warning.
     """
 
     ds = ds_Sv_echo_range_regular.copy()
-
     ds["Sp"] = ds["Sv"].copy()
 
     channel = ds["channel"].values[0]
 
-    ds_regridded = ep.commongrid.resample_to_geometry(
-        ds.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
-        target_variable="Sp",
-        target_channel=channel,
-    )
+    with pytest.warns(UserWarning, match="primarily intended and validated for Sv"):
+        ds_regridded = ep.commongrid.resample_to_geometry(
+            ds.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
+            target_variable="Sp",
+            target_channel=channel,
+        )
 
     xr.testing.assert_allclose(
         ds_regridded["Sp"].sel(channel=channel),
@@ -874,20 +874,20 @@ def test_resample_log_variable_sp(ds_Sv_echo_range_regular):
 def test_resample_log_variable_ts(ds_Sv_echo_range_regular):
     """
     Test that TS variables are resampled through the same
-    linear-domain averaging pathway as Sv.
+    linear-domain averaging pathway as Sv, with a warning.
     """
 
     ds = ds_Sv_echo_range_regular.copy()
-
     ds["TS"] = ds["Sv"].copy()
 
     channel = ds["channel"].values[0]
 
-    ds_regridded = ep.commongrid.resample_to_geometry(
-        ds.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
-        target_variable="TS",
-        target_channel=channel,
-    )
+    with pytest.warns(UserWarning, match="primarily intended and validated for Sv"):
+        ds_regridded = ep.commongrid.resample_to_geometry(
+            ds.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
+            target_variable="TS",
+            target_channel=channel,
+        )
 
     xr.testing.assert_allclose(
         ds_regridded["TS"].sel(channel=channel),
@@ -931,34 +931,139 @@ def test_resample_angle_variable_warns(ds_Sv_echo_range_regular):
     """
 
     ds = ds_Sv_echo_range_regular.copy()
-
     ds["angle_alongship"] = xr.zeros_like(ds["Sv"])
 
     channel = ds["channel"].values[0]
 
-    with pytest.warns(UserWarning, match="angle"):
+    with pytest.warns(UserWarning, match="Angle variables are resampled geometrically"):
         ep.commongrid.resample_to_geometry(
             ds.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
             target_variable="angle_alongship",
             target_channel=channel,
         )
 
-#TODO        
-@pytest.mark.xfail(
-    reason=(
-        "Split-beam angles are currently averaged geometrically. "
-        "Physical equivalence has not yet been validated."
-    )
-)
-def test_resample_angle_conservation():
-    pass
+@pytest.mark.integration
+def test_resample_matches_echoview_match_geometry(test_path):
+    """
+    Compare resample_to_geometry against Echoview Match Geometry output.
 
-#TODO 
-@pytest.mark.xfail(
-    reason=(
-        "Direct comparison against Echoview Match Geometry "
-        "has not yet been implemented."
+    The comparison excludes the near-transducer region where Echoview and
+    echopype handle the first samples differently.
+    """
+
+    raw_path = (
+        test_path["EK80"]
+        / "ncei-wcsd"
+        / "SH2306"
+        / "Hake-D20230811-T165727.raw"
     )
-)
-def test_resample_matches_echoview():
-    pass
+
+    reference_dir = test_path["RESAMPLE_GEOMETRY"]
+
+    echoview_files = {
+        18_000: reference_dir / "18kHz_regridded.sv.csv",
+        120_000: reference_dir / "120kHz_regridded.sv.csv",
+        200_000: reference_dir / "200kHz.sv.csv",
+    }
+
+    ed = ep.open_raw(raw_path, sonar_model="EK80")
+
+    ds_Sv = ep.calibrate.compute_Sv(
+        echodata=ed,
+        waveform_mode="CW",
+        encode_mode="power",
+    )
+
+    ds_Sv = ep.consolidate.add_depth(ds_Sv)
+
+    target_channel = ds_Sv.channel.sel(
+        channel=ds_Sv.frequency_nominal == 200_000
+    ).item()
+
+    ds_regridded = ep.commongrid.resample_to_geometry(
+        ds_Sv.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
+        target_variable="Sv",
+        target_channel=target_channel,
+    )
+
+    echoview_arrays = []
+
+    for freq, path in echoview_files.items():
+        channel = ds_regridded.channel.sel(
+            channel=ds_regridded.frequency_nominal == freq
+        ).item()
+
+        arr = pd.read_csv(path, header=None).to_numpy(dtype=float)
+        template = ds_regridded["Sv"].sel(channel=channel)
+
+        if (
+            arr.shape[0] != template.sizes["ping_time"]
+            and arr.shape[1] == template.sizes["ping_time"]
+        ):
+            arr = arr.T
+
+        assert arr.shape[0] == template.sizes["ping_time"]
+
+        template = template.isel(range_sample=slice(0, arr.shape[1]))
+
+        da = xr.DataArray(
+            arr,
+            dims=("ping_time", "range_sample"),
+            coords={
+                "ping_time": template["ping_time"],
+                "range_sample": template["range_sample"],
+            },
+            name="Sv",
+        ).expand_dims(channel=[channel])
+
+        echoview_arrays.append(da)
+
+    echoview_Sv = xr.concat(echoview_arrays, dim="channel")
+
+    ds_echoview = xr.Dataset(
+        data_vars={
+            "Sv": echoview_Sv,
+            "echo_range": ds_regridded["echo_range"]
+            .sel(channel=echoview_Sv.channel)
+            .isel(range_sample=slice(0, echoview_Sv.sizes["range_sample"])),
+            "frequency_nominal": ds_regridded["frequency_nominal"].sel(
+                channel=echoview_Sv.channel
+            ),
+        }
+    )
+
+    ds_regridded = (
+        ds_regridded
+        .sel(channel=ds_echoview.channel)
+        .isel(range_sample=slice(0, ds_echoview.sizes["range_sample"]))
+    )
+
+    xr.testing.assert_allclose(
+        ds_regridded["echo_range"],
+        ds_echoview["echo_range"],
+        rtol=0,
+        atol=0,
+    )
+
+    # Echoview and echopype differ in how the first samples near the
+    # transducer are represented after regridding. Exclude this region
+    # and compare only the overlapping valid portion of the water column.
+    min_range_m = 2.0
+    
+    diff = (
+        ds_regridded["Sv"]
+        .where(ds_echoview["echo_range"] > min_range_m)
+        - ds_echoview["Sv"].where(ds_echoview["echo_range"] > min_range_m)
+    ).compute()
+
+    # Compare only finite values because the masking above introduces NaNs
+    # outside the comparison region.
+    finite_diff = diff.values[np.isfinite(diff.values)]
+    assert finite_diff.size > 0
+
+    np.testing.assert_allclose(
+        finite_diff,
+        np.zeros_like(finite_diff),
+        atol=0.003,
+        rtol=0,
+    )
