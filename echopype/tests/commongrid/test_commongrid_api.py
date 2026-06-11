@@ -1067,3 +1067,55 @@ def test_resample_matches_echoview_match_geometry(test_path):
         atol=0.003,
         rtol=0,
     )
+    
+@pytest.mark.integration
+def test_resample_shared_depth_and_range_geometry(test_path):
+    """
+    Test that all channels share the same echo_range and depth geometry
+    after resampling to the 200 kHz channel.
+    """
+
+    raw_path = (
+        test_path["EK80"]
+        / "ncei-wcsd"
+        / "SH2306"
+        / "Hake-D20230811-T165727.raw"
+    )
+
+    ed = ep.open_raw(raw_path, sonar_model="EK80")
+
+    ds_Sv = ep.calibrate.compute_Sv(
+        echodata=ed,
+        waveform_mode="CW",
+        encode_mode="power",
+    )
+
+    ds_Sv = ep.consolidate.add_depth(ds_Sv)
+
+    target_channel = ds_Sv.channel.sel(
+        channel=ds_Sv.frequency_nominal == 200_000
+    ).item()
+
+    ds_regridded = ep.commongrid.resample_to_geometry(
+        ds_Sv.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
+        target_variable="Sv",
+        target_channel=target_channel,
+    )
+
+    ref_echo_range = ds_regridded["echo_range"].sel(channel=target_channel)
+    ref_depth = ds_regridded["depth"].sel(channel=target_channel)
+
+    for ch in ds_regridded.channel.values:
+        xr.testing.assert_allclose(
+            ds_regridded["echo_range"].sel(channel=ch),
+            ref_echo_range,
+            rtol=0,
+            atol=0,
+        )
+
+        xr.testing.assert_allclose(
+            ds_regridded["depth"].sel(channel=ch),
+            ref_depth,
+            rtol=0,
+            atol=0,
+        )
