@@ -1109,16 +1109,17 @@ def test_resample_shared_depth_and_range_geometry(test_path):
     ref_depth = ds_regridded["depth"].sel(channel=target_channel)
 
     for ch in ds_regridded.channel.values:
-        xr.testing.assert_allclose(
-            ds_regridded["echo_range"].sel(channel=ch),
-            ref_echo_range,
-            rtol=0,
+
+        np.testing.assert_allclose(
+            ds_regridded["echo_range"].sel(channel=ch).values,
+            ref_echo_range.values,
             atol=0,
+            rtol=0,
         )
 
-        xr.testing.assert_allclose(
-            ds_regridded["depth"].sel(channel=ch),
-            ref_depth,
-            rtol=0,
+        np.testing.assert_allclose(
+            ds_regridded["depth"].sel(channel=ch).values,
+            ref_depth.values,
             atol=0,
+            rtol=0,
         )
