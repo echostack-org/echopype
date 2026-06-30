@@ -183,9 +183,18 @@ def compute_MVBS(
     prov_dict = echopype_prov_attrs(process_type="processing")
     prov_dict["processing_function"] = "commongrid.compute_MVBS"
     ds_MVBS = ds_MVBS.assign_attrs(prov_dict)
-    ds_MVBS["frequency_nominal"] = ds_Sv["frequency_nominal"]  # re-attach frequency_nominal
-    ds_MVBS["channel"] = ds_Sv["channel"]  # re-attach channel
 
+    # Preserve the channel order returned by compute_raw_MVBS and align
+    # frequency_nominal to that order.
+    freq = ds_Sv["frequency_nominal"]
+
+    if "ping_time" in freq.dims:
+        freq = freq.isel(ping_time=0, drop=True)
+
+    if "channel" in ds_MVBS.dims:
+        ds_MVBS["frequency_nominal"] = freq.sel(channel=ds_MVBS["channel"])
+    else:
+        ds_MVBS["frequency_nominal"] = freq
     ds_MVBS = insert_input_processing_level(ds_MVBS, input_ds=ds_Sv)
 
     return ds_MVBS
@@ -259,7 +268,12 @@ def compute_MVBS_index_binning(ds_Sv, range_sample_num=100, ping_num=100):
     prov_dict = echopype_prov_attrs(process_type="processing")
     prov_dict["processing_function"] = "commongrid.compute_MVBS_index_binning"
     ds_MVBS = ds_MVBS.assign_attrs(prov_dict)
-    ds_MVBS["frequency_nominal"] = ds_Sv["frequency_nominal"]  # re-attach frequency_nominal
+    freq = ds_Sv["frequency_nominal"]
+
+    if "ping_time" in freq.dims:
+        freq = freq.isel(ping_time=0, drop=True)
+
+    ds_MVBS["frequency_nominal"] = freq
 
     ds_MVBS = insert_input_processing_level(ds_MVBS, input_ds=ds_Sv)
 
@@ -387,8 +401,15 @@ def compute_NASC(
 
     # Set ping time binning information
     ds_NASC["ping_time"] = (["distance"], raw_NASC["ping_time"].data, ds_Sv["ping_time"].attrs)
+    freq = ds_Sv["frequency_nominal"]
 
-    ds_NASC["frequency_nominal"] = ds_Sv["frequency_nominal"]  # re-attach frequency_nominal
+    if "ping_time" in freq.dims:
+        freq = freq.isel(ping_time=0, drop=True)
+
+    if "channel" in ds_NASC.dims:
+        ds_NASC["frequency_nominal"] = freq.sel(channel=ds_NASC["channel"])
+    else:
+        ds_NASC["frequency_nominal"] = freq
 
     # Attach attributes
     _set_var_attrs(

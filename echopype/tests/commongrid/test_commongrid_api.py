@@ -91,6 +91,37 @@ def test__groupby_x_along_channels(request, range_var, lat_lon):
     assert f"{range_var}_bins" in sv_mean.dims
 
 
+@pytest.mark.unit
+def test_compute_MVBS_preserves_channel_frequency_mapping_with_2d_frequency_nominal(
+    mock_Sv_dataset_regular,
+):
+    ds_Sv = mock_Sv_dataset_regular.copy()
+
+    # Force AZFP-like metadata: frequency_nominal(ping_time, channel)
+    freq_values = xr.DataArray(
+        np.tile(np.array([120000.0, 200000.0]), (ds_Sv.sizes["ping_time"], 1)),
+        dims=("ping_time", "channel"),
+        coords={
+            "ping_time": ds_Sv["ping_time"],
+            "channel": ds_Sv["channel"],
+        },
+    )
+    ds_Sv["frequency_nominal"] = freq_values
+
+    ds_MVBS = ep.commongrid.compute_MVBS(
+        ds_Sv,
+        range_bin="2m",
+        ping_time_bin="1s",
+    )
+
+    expected_freq = ds_Sv["frequency_nominal"].isel(ping_time=0).sel(
+        channel=ds_MVBS["channel"]
+    )
+
+    assert ds_MVBS["frequency_nominal"].dims == ("channel",)
+    assert np.array_equal(ds_MVBS["frequency_nominal"].values, expected_freq.values)
+
+
 # NASC Tests
 @pytest.mark.integration
 @pytest.mark.parametrize("compute_mvbs", [True, False])
@@ -300,6 +331,16 @@ def test_compute_MVBS(test_data_samples):
     ping_time_bin = "20s"
     ds_MVBS = ep.commongrid.compute_MVBS(Sv, ping_time_bin=ping_time_bin)
     assert ds_MVBS is not None
+    freq = Sv["frequency_nominal"]
+
+    if "ping_time" in freq.dims:
+        freq = freq.isel(ping_time=0, drop=True)
+
+    expected_freq = freq.sel(channel=ds_MVBS["channel"])
+    assert np.array_equal(
+        ds_MVBS["frequency_nominal"].values,
+        expected_freq.values,
+    )
 
     # Test to see if ping_time was resampled correctly
     expected_ping_time = (
