@@ -78,26 +78,20 @@ def _encode_time_dataarray(da):
     """Encodes and decode datetime64 array similar to writing to file"""
     if da.size == 0:
         return da
-    if da.dtype == np.int64:
-        encoded_data = da
-    elif da.dtype == np.float64:
+
+    if np.issubdtype(da.dtype, np.integer):
+        return np.asarray(da).astype("datetime64[ns]")
+
+    if da.dtype == np.float64:
         raise ValueError("Encoded time data array must be of type ```np.int64```.")
-    else:
-        # fmt: off
-        encoded_data, _, _ = coding.times.encode_cf_datetime(
-            da, **{
-                "units": DEFAULT_TIME_ENCODING["units"],
-                "calendar": DEFAULT_TIME_ENCODING["calendar"],
-            }
-        )
-        # fmt: on
-    return coding.times.decode_cf_datetime(
-        encoded_data,
-        **{
-            "units": DEFAULT_TIME_ENCODING["units"],
-            "calendar": DEFAULT_TIME_ENCODING["calendar"],
-        },
+
+    encoded_data, _, _ = coding.times.encode_cf_datetime(
+        da,
+        units=DEFAULT_TIME_ENCODING["units"],
+        calendar=DEFAULT_TIME_ENCODING["calendar"],
     )
+
+    return np.asarray(encoded_data).astype("datetime64[ns]")
 
 
 def _get_dask_auto_chunk(

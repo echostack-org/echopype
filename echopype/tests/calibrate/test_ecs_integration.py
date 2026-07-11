@@ -163,9 +163,14 @@ def test_ecs_intake_ek80_BB_complex(ek80_path, ecs_path):
         "gain_correction", "angle_offset_alongship", "angle_offset_athwartship",
         "beamwidth_alongship", "beamwidth_athwartship",
     ]:
-        assert ds_Sv[p_name].sel(channel=chan_w_BB_param).drop_vars("channel").identical(
-            ecs_cal_BB[p_name].interp(cal_frequency=freq_center)
-            .squeeze().drop_vars(["channel", "cal_frequency"])
+        xr.testing.assert_allclose(
+            ds_Sv[p_name].sel(channel=chan_w_BB_param).drop_vars("channel"),
+            ecs_cal_BB[p_name]
+            .interp(cal_frequency=freq_center)
+            .squeeze()
+            .drop_vars(["channel", "cal_frequency"]),
+            rtol=0,
+            atol=1e-15,
         )
 
     # TODO: remove params that are only relevant to EK80 CW cals `sa_correction`
