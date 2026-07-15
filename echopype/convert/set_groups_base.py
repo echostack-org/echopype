@@ -11,10 +11,11 @@ from ..utils.coding import COMPRESSION_SETTINGS, DEFAULT_TIME_ENCODING, set_time
 from ..utils.prov import echopype_prov_attrs, source_files_vars
 
 NMEA_SENTENCE_DEFAULT = ["GGA", "GLL", "RMC"]
-NMEA_SENTENCE_SPEED = ['RMC', 'VTG']
-NMEA_SENTENCE_HEADING = ['HDT']
+NMEA_SENTENCE_SPEED = ["RMC", "VTG"]
+NMEA_SENTENCE_HEADING = ["HDT"]
 
 KNOTS_TO_M_PER_S = 0.51444444444
+
 
 class SetGroupsBase(abc.ABC):
     """Base class for saving groups to netcdf or zarr from echosounder data files."""
@@ -220,7 +221,7 @@ class SetGroupsBase(abc.ABC):
         else:
             time = [np.nan]
 
-        return nmea_msg, time,msg_type
+        return nmea_msg, time, msg_type
 
     # TODO: move this to be part of parser as it is not a "set" operation
     def _extract_NMEA_latlon(self):
@@ -260,19 +261,19 @@ class SetGroupsBase(abc.ABC):
                 try:
                     # pynmea2 has different names for speed over ground, depending on the NMEA
                     # message that it comes from
-                    if x.sentence_type == 'VTG':
+                    if x.sentence_type == "VTG":
                         # VTG speed is returned as a Decimal, so fix that
                         sog.append(
-                            float(x.spd_over_grnd_kts)*KNOTS_TO_M_PER_S 
-                            if hasattr(x, "spd_over_grnd_kts") and 
-                                x.spd_over_grnd_kts is not None else np.nan
+                            float(x.spd_over_grnd_kts) * KNOTS_TO_M_PER_S
+                            if hasattr(x, "spd_over_grnd_kts") and x.spd_over_grnd_kts is not None
+                            else np.nan
                         )
                     else:  # only RMC so far
                         sog.append(
-                            x.spd_over_grnd*KNOTS_TO_M_PER_S
-                            if hasattr(x, "spd_over_grnd") and
-                                x.spd_over_grnd is not None else np.nan
-                            )
+                            x.spd_over_grnd * KNOTS_TO_M_PER_S
+                            if hasattr(x, "spd_over_grnd") and x.spd_over_grnd is not None
+                            else np.nan
+                        )
                 except ValueError:
                     sog.append(np.nan)
         else:
@@ -290,9 +291,10 @@ class SetGroupsBase(abc.ABC):
                 try:
                     # HDG speed is returned as a Decimal, so fix that
                     heading.append(
-                        float(x.heading)if hasattr(x, "heading") and
-                            x.heading is not None else np.nan
-                        )
+                        float(x.heading)
+                        if hasattr(x, "heading") and x.heading is not None
+                        else np.nan
+                    )
                 except ValueError:
                     heading.append(np.nan)
         else:
