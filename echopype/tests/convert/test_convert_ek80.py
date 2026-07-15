@@ -500,7 +500,7 @@ def test_parse_mru0_mru1(ek80_path):
     # Check dimensions
     assert (
         echodata["Platform"].sizes
-        == {'channel': 1, 'time1': 1, 'time2': 43, 'time3': 43}
+        == {'channel': 1, 'time1': 1, 'time2': 43, 'time3': 43, 'time4': 1, 'time5': 1}
     )
 
     # Check no NaN values in MRU data
