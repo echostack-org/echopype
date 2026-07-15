@@ -517,6 +517,35 @@ def test_parse_mru0_mru1(ek80_path):
 
 
 @pytest.mark.unit
+def test_parse_speed_over_ground(ek80_path):
+    """Make sure we parse speed over ground from a RAW file."""
+
+    # This raw file has speed in NMEA VTG and RMC messages
+    echodata = open_raw(
+        raw_file=ek80_path/'vessel_speed'/'khr2405-D20241001-T024415.raw',
+        sonar_model='EK80'
+    )
+
+    # Check that there are data that are not NaN
+    assert (echodata["Platform"]['speed_over_ground'].sizes == {'time4': 440})
+    assert (not np.any(np.isnan(echodata["Platform"]['speed_over_ground'])))
+
+
+@pytest.mark.unit
+def test_parse_NMEA_heading(ek80_path):
+    """Make sure we parse NMEA heading from a RAW file when MRU heading is not present."""
+
+    echodata = open_raw(
+        raw_file=ek80_path/'heading'/'D20260613-T230914.raw',
+        sonar_model='ES80'
+    )
+
+    # Check that there are non-NaN data
+    assert (echodata["Platform"]['heading'].sizes == {'time5': 911})
+    assert (not np.any(np.isnan(echodata["Platform"]['heading'])))
+
+
+@pytest.mark.unit
 def test_parse_missing_sound_velocity_profile(ek80_missing_sound_path):
     """
     Tests that RAW files that are missing sound velocity profile values can be

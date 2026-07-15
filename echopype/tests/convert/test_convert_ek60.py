@@ -264,3 +264,33 @@ def test_converting_ek60_raw_with_missing_channel_power(ek60_missing_channel_pow
     # Check that all empty power channels do not exist in the EchoData Beam group
     for _, empty_power_channel_name in empty_power_chs.items():
         assert empty_power_channel_name not in ed["Sonar/Beam_group1"]["channel"]
+
+
+@pytest.mark.unit
+def test_parse_speed_over_ground(ek60_path):
+    """Make sure we parse speed over ground from a RAW file."""
+
+    # This raw file has speed in NMEA VTG and RMC messages
+    echodata = open_raw(
+        raw_file=ek60_path/'NBP_B050N-D20180118-T090228.raw',
+        sonar_model='EK60'
+    )
+
+    # Check that there are data that are not NaN
+    assert (echodata["Platform"]['speed_over_ground'].sizes == {'time3': 584})
+    # this .raw file has nan's in the speed over ground data 
+    # assert (not np.any(np.isnan(echodata["Platform"]['speed_over_ground'])))
+
+
+@pytest.mark.unit
+def test_parse_NMEA_heading(ek60_path):
+    """Make sure we parse NMEA heading from a RAW file when MRU heading is not present."""
+
+    echodata = open_raw(
+        raw_file=ek60_path/'NBP_B050N-D20180118-T090228.raw',
+        sonar_model='EK60'
+    )
+
+    # Check that there are non-NaN data
+    assert (echodata["Platform"]['heading'].sizes == {'time4': 584})
+    assert (not np.any(np.isnan(echodata["Platform"]['heading'])))
