@@ -240,7 +240,6 @@ class SetGroupsBase(abc.ABC):
                 try:
                     lon.append(x.longitude if hasattr(x, "longitude") else np.nan)
                 except ValueError as ve:
-                    print(x)
                     lon.append(np.nan)
                     warnings.warn(
                         f"At least one longitude entry is problematic and "
