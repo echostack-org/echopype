@@ -248,7 +248,7 @@ class SetGroupsEK60(SetGroupsBase):
                     ]
                 },
                 "heading": (
-                    ['time4'],
+                    ["time4"],
                     np.array(heading),
                     self._varattrs["platform_var_default"]["heading"],
                 ),
@@ -257,7 +257,6 @@ class SetGroupsEK60(SetGroupsBase):
                     np.array(sog),
                     self._varattrs["platform_var_default"]["speed_over_ground"],
                 ),
-
             },
             coords={
                 "time1": (

@@ -479,7 +479,7 @@ class SetGroupsEK80(SetGroupsBase):
                         "valid_min": 0.0,
                         "standard_name": "sound_frequency",
                     },
-                ),  
+                ),
                 "heading": hdg_data,
                 "latitude_mru1": (
                     ["time3"],
