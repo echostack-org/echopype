@@ -422,8 +422,11 @@ def compute_NASC(
 
 
 def resample_to_geometry(
-    ds_Sv, target_variable: str, target_channel: str | None = None, target_grid: xr.DataArray = None
-) -> xr.Dataset:
+    ds_Sv,
+    target_variable: str = "Sv",
+    target_channel: str | None = None,
+    target_grid: xr.DataArray | None = None,
+):
     """
     Regrids a variable across all channels in the EchoData object to match the geometry
     along range of the specified target channel.
@@ -433,12 +436,18 @@ def resample_to_geometry(
     ----------
     ds_Sv : xr.Dataset
         Input Dataset containing Sv data
+
+    target_variable : str, default "Sv"
+        Name of the variable to resample. The variable must exist in
+        ``ds_Sv``.
+
     target_channel : str, optional
         Channel used as reference grid. Must be provided if target_grid is None.
 
     target_grid : xr.DataArray, optional
         Custom grid. Must be provided if target_channel is None.
         Data array must have dimension ('ping_time', 'range_sample').
+
     Returns
     -------
     xr.Dataset
@@ -462,13 +471,15 @@ def resample_to_geometry(
             stacklevel=2,
         )
 
-    if (target_channel is not None) == (target_grid is not None):
-        raise ValueError("Provide only one of target_channel or target_grid, not both.")
-
     if (target_channel is None) == (target_grid is None):
         raise ValueError("Provide exactly one of target_channel or target_grid.")
 
     if exist_reversed_time(ds_Sv, "ping_time"):
+        warnings.warn(
+            "Reversed ping_time values detected. The dataset has been reordered "
+            "to increasing ping_time before resampling.",
+            UserWarning,
+        )
         coerce_increasing_time(ds_Sv)
 
     channels = ds_Sv.channel.values

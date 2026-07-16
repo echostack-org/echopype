@@ -898,28 +898,28 @@ def test_resample_log_variable_ts(ds_Sv_echo_range_regular):
     
 @pytest.mark.unit
 def test_resample_requires_exactly_one_target(ds_Sv_echo_range_regular):
-    """
-    Ensure that users provide exactly one target geometry.
-    """
-
-    channel = ds_Sv_echo_range_regular["channel"].values[0]
-
-    target_grid = (
-        ds_Sv_echo_range_regular["echo_range"]
-        .isel(channel=0)
+    target_channel = ds_Sv_echo_range_regular.channel.isel(channel=0).item()
+    target_grid = ds_Sv_echo_range_regular["echo_range"].sel(
+        channel=target_channel
     )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Provide exactly one of target_channel or target_grid",
+    ):
         ep.commongrid.resample_to_geometry(
             ds_Sv_echo_range_regular,
             target_variable="Sv",
         )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Provide exactly one of target_channel or target_grid",
+    ):
         ep.commongrid.resample_to_geometry(
             ds_Sv_echo_range_regular,
             target_variable="Sv",
-            target_channel=channel,
+            target_channel=target_channel,
             target_grid=target_grid,
         )
         

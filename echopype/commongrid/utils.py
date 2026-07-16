@@ -698,46 +698,6 @@ def ping_time_bin_parsing_and_conversion(ping_time_bin: str):
     return ping_time_bin_resvalue, ping_time_bin_resunit_label
 
 
-def get_valid_max_depth_ping_index(
-    ds: xr.Dataset, target_channel: str = None, target_grid: xr.DataArray = None
-) -> int:
-    """
-    Finds the integer indices of the last non-NaN value in a DataArray.
-
-    Parameters
-    ----------
-    ds : xr.Dataset
-        The xarray Dataset containing the echo_range variable.
-    target_channel : string, optional
-        The label of the channel from which to find the deepest ping.
-    target_grid : xr.DataArray, optional
-        A data array specifying the target grid from which to find the deeepst ping.
-        Data array must have dimension ('ping_time', 'range_sample').
-    Returns
-    -------
-    deepest_ping: int
-        Index of the ping containing the most amount of data before trailing NaN values.
-    """
-    da = xr.DataArray()
-    if target_channel is not None:
-        da = ds.sel(channel=target_channel)["echo_range"].values
-    if target_grid is not None:
-        da = target_grid.values
-
-    deepest_ping = 0
-    max_range_sample = -np.inf
-
-    for i in range(da.shape[0]):
-        if np.isnan(da[i, :]).all():
-            continue
-        all_nan = np.isnan(da[i, :])
-        row_indices = np.where(~all_nan)[0]
-        max_range_sample = max(max_range_sample, row_indices.max())
-        if max_range_sample == row_indices.max():
-            deepest_ping = i
-    return deepest_ping
-
-
 def _exact_integration_kernel(target_edges, source_edge, source_value):
     """
     Helper Kernel: Performs exact interval intersection to determine energy distribution.
