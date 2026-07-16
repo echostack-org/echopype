@@ -425,24 +425,27 @@ def resample_to_geometry(
     ds_Sv, target_variable: str, target_channel: str | None = None, target_grid: xr.DataArray = None
 ) -> xr.Dataset:
     """
-    Regrids all channels in the EchoData object to match the geometry
-    of the specified target channel index.
+    Regrids a variable across all channels in the EchoData object to match the geometry
+    along range of the specified target channel.
+    Ping time is assumed identical for all input channels.
 
     Parameters
     ----------
     ds_Sv : xr.Dataset
         Input Dataset containing Sv data
     target_channel : str, optional
-    Channel used as reference grid. Must be provided if target_grid is None.
+        Channel used as reference grid. Must be provided if target_grid is None.
 
     target_grid : xr.DataArray, optional
-    Custom grid. Must be provided if target_channel is None.
-    Data array must have dimension ('ping_time', 'range_sample').
+        Custom grid. Must be provided if target_channel is None.
+        Data array must have dimension ('ping_time', 'range_sample').
     Returns
     -------
     xr.Dataset
         A new Dataset where all channels share the same `ping_time`,
         `range_sample`, and `echo_range` as the target.
+        `ping_time` is assumed identical across all input channels
+        and preserved throughout the resampling process.
     """
 
     LOG_VARIABLES = {"Sv", "Sp", "TS"}
@@ -453,7 +456,7 @@ def resample_to_geometry(
             "This function is primarily intended and validated for Sv. "
             "Variables such as Sp and TS are resampled in the linear domain, "
             "but interpretation should be done with caution. "
-            "Angle variables are resampled geometrically and may not be "
+            "Angle variables are resampled geometrically and is not "
             "physically equivalent to recomputing angles from complex data.",
             UserWarning,
             stacklevel=2,
