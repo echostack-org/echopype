@@ -1,7 +1,7 @@
 import abc
 import warnings
-from typing import List, Set
 from collections.abc import Iterable
+from typing import List, Set
 
 import numpy as np
 import pynmea2
@@ -182,7 +182,9 @@ class SetGroupsBase(abc.ABC):
         raise NotImplementedError
 
     # TODO: move this to be part of parser as it is not a "set" operation
-    def _extract_selected_NMEA(self, nmea_sentence_types: list) -> tuple[Iterable, Iterable, Iterable]:
+    def _extract_selected_NMEA(
+        self, nmea_sentence_types: list
+    ) -> tuple[Iterable, Iterable, Iterable]:
         """Parse out the selected NMEA messages."""
         messages = [string[3:6] for string in self.parser_obj.nmea["nmea_string"]]
         idx_loc = np.argwhere(np.isin(messages, nmea_sentence_types)).squeeze()
