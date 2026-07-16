@@ -180,8 +180,8 @@ class SetGroupsEK60(SetGroupsBase):
         # Collect variables
         # Read lat/long from NMEA datagram
         time1, msg_type, lat, lon = self._extract_NMEA_latlon()
-        time3, msg_type_sog, sog = self._extract_NMEA_speed()
-        time4, msg_type_heading, heading = self._extract_NMEA_heading()
+        time10, msg_type_heading, heading = self._extract_NMEA_heading()
+        time11, msg_type_sog, sog = self._extract_NMEA_speed()
 
         # NMEA dataset: variables filled with np.nan if they do not exist
         platform_dict = {"platform_name": "", "platform_type": "", "platform_code_ICES": ""}
@@ -192,8 +192,8 @@ class SetGroupsEK60(SetGroupsBase):
 
         # Handle potential nan timestamp
         time1 = self._nan_timestamp_handler(time1)
-        time3 = self._nan_timestamp_handler(time3)
-        time4 = self._nan_timestamp_handler(time4)
+        time10 = self._nan_timestamp_handler(time10)
+        time11 = self._nan_timestamp_handler(time11)
 
         ds = xr.Dataset(
             {
@@ -248,12 +248,12 @@ class SetGroupsEK60(SetGroupsBase):
                     ]
                 },
                 "heading": (
-                    ["time4"],
+                    ["time10"],
                     np.array(heading),
                     self._varattrs["platform_var_default"]["heading"],
                 ),
                 "speed_over_ground": (
-                    ["time3"],
+                    ["time11"],
                     np.array(sog),
                     self._varattrs["platform_var_default"]["speed_over_ground"],
                 ),
@@ -278,20 +278,20 @@ class SetGroupsEK60(SetGroupsBase):
                         "orientation data.",
                     },
                 ),
-                "time3": (
-                    ["time3"],
-                    time3,
-                    {
-                        **self._varattrs["platform_coord_default"]["time1"],
-                        "comment": "Time coordinate corresponding to NMEA speed data.",
-                    },
-                ),
-                "time4": (
-                    ["time4"],
-                    time4,
+                "time10": (
+                    ["time10"],
+                    time10,
                     {
                         **self._varattrs["platform_coord_default"]["time1"],
                         "comment": "Time coordinate corresponding to NMEA heading data.",
+                    },
+                ),
+                "time11": (
+                    ["time11"],
+                    time11,
+                    {
+                        **self._varattrs["platform_coord_default"]["time1"],
+                        "comment": "Time coordinate corresponding to NMEA speed data.",
                     },
                 ),
             },

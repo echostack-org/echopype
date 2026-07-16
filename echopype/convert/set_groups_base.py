@@ -1,6 +1,7 @@
 import abc
 import warnings
 from typing import List, Set
+from collections.abc import Iterable
 
 import numpy as np
 import pynmea2
@@ -181,7 +182,7 @@ class SetGroupsBase(abc.ABC):
         raise NotImplementedError
 
     # TODO: move this to be part of parser as it is not a "set" operation
-    def _extract_selected_NMEA(self, nmea_sentence_types: list) -> tuple[list, list, list]:
+    def _extract_selected_NMEA(self, nmea_sentence_types: list) -> tuple[Iterable, Iterable, Iterable]:
         """Parse out the selected NMEA messages."""
         messages = [string[3:6] for string in self.parser_obj.nmea["nmea_string"]]
         idx_loc = np.argwhere(np.isin(messages, nmea_sentence_types)).squeeze()
@@ -220,6 +221,14 @@ class SetGroupsBase(abc.ABC):
             )
         else:
             time = [np.nan]
+
+        # There can be duplicate timestamps both due to a problem in earlier Simrad raw
+        # files and if multiple NMEA sentences are used with the same
+        # timestamp. Remove them here.
+        if nmea_msg:
+            time, indices = np.unique(time, return_index=True, sorted=False)
+            nmea_msg = list(np.array(nmea_msg)[indices])
+            msg_type = list(np.array(msg_type)[indices])
 
         return nmea_msg, time, msg_type
 
@@ -526,9 +535,7 @@ class SetGroupsBase(abc.ABC):
             }
         )
 
-        return platform_ds.transpose(
-            "channel", "time1", "time2", "time3", "time4", missing_dims="ignore"
-        )
+        return platform_ds.transpose(missing_dims="ignore")
 
     def _add_seafloor_detection_data_to_vendor_ds(
         self,

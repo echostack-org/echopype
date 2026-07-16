@@ -277,7 +277,7 @@ def test_parse_speed_over_ground(ek60_path):
     )
 
     # Check that there are data that are not NaN
-    assert (echodata["Platform"]['speed_over_ground'].sizes == {'time3': 584})
+    assert (echodata["Platform"]['speed_over_ground'].sizes == {'time11': 584})
     # this .raw file has nan's in the speed over ground data 
     # assert (not np.any(np.isnan(echodata["Platform"]['speed_over_ground'])))
 
@@ -292,5 +292,5 @@ def test_parse_NMEA_heading(ek60_path):
     )
 
     # Check that there are non-NaN data
-    assert (echodata["Platform"]['heading'].sizes == {'time4': 584})
+    assert (echodata["Platform"]['heading'].sizes == {'time10': 584})
     assert (not np.any(np.isnan(echodata["Platform"]['heading'])))

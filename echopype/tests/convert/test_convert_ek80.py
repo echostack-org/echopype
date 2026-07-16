@@ -500,7 +500,7 @@ def test_parse_mru0_mru1(ek80_path):
     # Check dimensions
     assert (
         echodata["Platform"].sizes
-        == {'channel': 1, 'time1': 1, 'time2': 43, 'time3': 43, 'time4': 1, 'time5': 1}
+        == {'channel': 1, 'time1': 1, 'time2': 43, 'time3': 43, 'time10': 1, 'time11': 1}
     )
 
     # Check no NaN values in MRU data
@@ -527,7 +527,7 @@ def test_parse_speed_over_ground(ek80_path):
     )
 
     # Check that there are data that are not NaN
-    assert (echodata["Platform"]['speed_over_ground'].sizes == {'time4': 440})
+    assert (echodata["Platform"]['speed_over_ground'].sizes == {'time11': 220})
     assert (not np.any(np.isnan(echodata["Platform"]['speed_over_ground'])))
 
 
@@ -541,7 +541,7 @@ def test_parse_NMEA_heading(ek80_path):
     )
 
     # Check that there are non-NaN data
-    assert (echodata["Platform"]['heading'].sizes == {'time5': 911})
+    assert (echodata["Platform"]['heading'].sizes == {'time10': 911})
     assert (not np.any(np.isnan(echodata["Platform"]['heading'])))
 
 
