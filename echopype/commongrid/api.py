@@ -426,7 +426,7 @@ def resample_to_geometry(
 ) -> xr.Dataset:
     """
     Regrids a variable across all channels in the EchoData object to match the geometry
-    along range of the specified target channel. 
+    along range of the specified target channel.
     Ping time is assumed identical for all input channels.
 
     Parameters
@@ -443,8 +443,8 @@ def resample_to_geometry(
     -------
     xr.Dataset
         A new Dataset where all channels share the same `ping_time`,
-        `range_sample`, and `echo_range` as the target. 
-        `ping_time` is assumed identical across all input channels 
+        `range_sample`, and `echo_range` as the target.
+        `ping_time` is assumed identical across all input channels
         and preserved throughout the resampling process.
     """
 
