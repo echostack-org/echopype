@@ -742,6 +742,11 @@ def test_resample_target_channel_same(request, er_type):
         atol=1e-12,
     )
 
+    attrs = ds_regridded["Sv"].attrs
+
+    assert attrs["resampling_mode"] == "target_channel"
+    assert attrs["target_channel"] == channel
+
     # Channel must remain both a dimension and a coordinate
     assert "channel" in ds_regridded.dims
     assert "channel" in ds_regridded.coords
@@ -834,6 +839,14 @@ def test_resample_with_grid(request, er_type, calculate_total_energy):
         rtol=1e-3,
         err_msg="Total energy was not conserved during regridding!",
     )
+
+    attrs = ds_regridded["Sv"].attrs
+
+    assert attrs["resampling_mode"] == "target_grid"
+    assert "target_channel" not in attrs
+    assert "target_grid" not in attrs
+    assert "grid_spacing" not in attrs
+    assert "mean_grid_spacing" not in attrs
 
     # Every channel must receive the complete ping-dependent target geometry
     for ch in channels:
