@@ -33,7 +33,7 @@ if os.getenv("USE_POOCH") == "True" and os.getenv("PYTEST_XDIST_WORKER") is None
     bundles = [
         "ad2cp.zip", "azfp.zip", "azfp6.zip", "ea640.zip", "ecs.zip", "ek60.zip",
         "ek60_calibrate_chunks.zip", "ek60_missing_channel_power.zip", "ek80.zip",
-        "ek80_bb_complex_multiplex.zip", "ek80_bb_with_calibration.zip",
+        "ek80_heading.zip", "ek80_bb_complex_multiplex.zip", "ek80_bb_with_calibration.zip",
         "ek80_duplicate_ping_times.zip", "ek80_ext.zip", "ek80_invalid_env_datagrams.zip",
         "ek80_missing_sound_velocity_profile.zip", "ek80_new.zip", "ek80_sequence.zip",
         "es60.zip", "es70.zip", "es80.zip", "legacy_datatree.zip", "resample_to_geometry_example_data.zip",
@@ -58,6 +58,7 @@ if os.getenv("USE_POOCH") == "True" and os.getenv("PYTEST_XDIST_WORKER") is None
         "ek80_invalid_env_datagrams.zip": "sha256:dece27d90f30d1a13b56d99350c3254e81622af3199fda0112d3b9e1d7db270c",  # noqa: E501
         "ek80_missing_sound_velocity_profile.zip": "sha256:1635585026ae5c4ffdff09ca4d63aeff0b33471c5ee0e1b8a520f87469535852",  # noqa: E501
         "ek80_new.zip": "sha256:f799cde453762c46ad03fee178c76cd9fbb00eec92a5d1038c32f6a9479b2e57",
+        "ek80_heading.zip": "sha256:cd02ed39fef2fd450c3d28ccec673625557d3d3d6348ffe54cb23b66e5f7858d",
         "ek80_sequence.zip": "sha256:9d8fac39dd31f587d55b9978ba4d2b52bbc85daa85d320ef2ac34b3ae947bb1f",  # noqa: E501
         "es60.zip": "sha256:a6c2a15c664ef8b6ac17cb36a28162c271fca361509cf43313038f1bdc9b6c7c",
         "es70.zip": "sha256:a6b4f27f33f09bace26264de6984fdb4111a3a0337bc350c3c1d25c8b3effc7c",
@@ -163,6 +164,7 @@ def test_path():
         "EK60_CAL_CHUNKS": TEST_DATA_FOLDER / "ek60_calibrate_chunks",
         "EK60_MISSING_CHANNEL_POWER": TEST_DATA_FOLDER / "ek60_missing_channel_power",
         "EK80": TEST_DATA_FOLDER / "ek80",
+        "EK80_HEADING": TEST_DATA_FOLDER / "ek80_heading",
         "EK80_NEW": TEST_DATA_FOLDER / "ek80_new",
         "ES60": TEST_DATA_FOLDER / "es60",
         "ES70": TEST_DATA_FOLDER / "es70",
