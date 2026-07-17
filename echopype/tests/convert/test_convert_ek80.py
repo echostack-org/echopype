@@ -540,7 +540,7 @@ def test_parse_NMEA_heading(ek80_heading_path):
     """Make sure we parse NMEA heading from a RAW file when MRU heading is not present."""
 
     echodata = open_raw(
-        raw_file=ek80_heading_path/'heading'/'D20260613-T230914.raw',
+        raw_file=ek80_heading_path/'D20260613-T230914.raw',
         sonar_model='ES80'
     )
 
