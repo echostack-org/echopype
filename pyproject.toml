@@ -65,7 +65,7 @@ plot = [
     "matplotlib>=3.7",
     "cmocean",
 ]
-[dependency-groups]
+
 test = [
     "moto",
     "pooch",
@@ -73,7 +73,6 @@ test = [
     "pytest-cov",
     "pytest-mock",
     "pytest-xdist",
-    "matplotlib",
 ]
 
 docs = [
