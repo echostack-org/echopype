@@ -424,6 +424,7 @@ def compute_NASC(
 def resample_to_geometry(
     ds_Sv,
     target_variable: str = "Sv",
+    is_log: bool = True,
     target_channel: str | None = None,
     target_grid: xr.DataArray | None = None,
 ):
@@ -441,6 +442,11 @@ def resample_to_geometry(
         Name of the variable to resample. The variable must exist in
         ``ds_Sv``.
 
+    is_log : bool, default True
+        Whether ``target_variable`` contains logarithmic values. If True,
+        values are converted to the linear domain before weighted averaging
+        and converted back afterward.
+
     target_channel : str, optional
         Channel used as reference grid. Must be provided if target_grid is None.
 
@@ -457,15 +463,18 @@ def resample_to_geometry(
         and preserved throughout the resampling process.
     """
 
-    LOG_VARIABLES = {"Sv", "Sp", "TS"}
+    if target_variable not in ds_Sv:
+        raise ValueError(
+            f"'{target_variable}' is not a variable in the input dataset. "
+            f"Available variables are: {list(ds_Sv.data_vars)}"
+        )
 
     if target_variable != "Sv":
         warnings.warn(
             f"Resampling '{target_variable}' with overlap-weighted averaging. "
             "This function is primarily intended and validated for Sv. "
-            "Variables such as Sp and TS are resampled in the linear domain, "
-            "but interpretation should be done with caution. "
-            "Angle variables are resampled geometrically and is not "
+            "Ensure that `is_log` correctly describes the variable's domain. "
+            "Angle variables are resampled geometrically, and this is not "
             "physically equivalent to recomputing angles from complex data.",
             UserWarning,
             stacklevel=2,
@@ -483,10 +492,6 @@ def resample_to_geometry(
         coerce_increasing_time(ds_Sv)
 
     channels = ds_Sv.channel.values
-    ds_var_names = ds_Sv.keys()
-
-    if target_variable not in ds_var_names:
-        raise ValueError(f"{target_variable} is not part of the variable names in : {ds_var_names}")
 
     expected_dims = {"channel", "ping_time", "range_sample"}
     actual_dims = set(ds_Sv[target_variable].dims)
@@ -517,7 +522,7 @@ def resample_to_geometry(
 
         ds_source = da_var.sel(channel=channel)
 
-        if target_variable in LOG_VARIABLES:
+        if is_log:
             source_linear = _log2lin(ds_source)
         else:
             source_linear = ds_source
@@ -538,8 +543,8 @@ def resample_to_geometry(
         )
 
         # Convert back to log domain
-        result_linear = result_linear.where(result_linear > 0)
-        if target_variable in LOG_VARIABLES:
+        if is_log:
+            result_linear = result_linear.where(result_linear > 0)
             resample_variable = _lin2log(result_linear)
         else:
             resample_variable = result_linear
@@ -557,29 +562,27 @@ def resample_to_geometry(
             target_variable: ds_combined,
             "echo_range": echo_range_aligned,
             "frequency_nominal": ds_Sv["frequency_nominal"],
-        }
+        },
+        coords={
+            "channel": ds_Sv["channel"],
+        },
     )
     if "water_level" in ds_Sv:
         new_ds["water_level"] = ds_Sv["water_level"]
 
     # Attach attributes
     new_ds[target_variable].attrs = ds_Sv[target_variable].attrs
-    range_var_attrs = np.round(target_range_da.diff("range_sample").mean().values, decimals=4)
+
     if target_channel:
         new_ds[target_variable].attrs["resampling_mode"] = "target_channel"
         new_ds[target_variable].attrs["target_channel"] = target_channel
-        new_ds[target_variable].attrs["grid_spacing"] = str(range_var_attrs) + "m"
     else:
         new_ds[target_variable].attrs["resampling_mode"] = "target_grid"
-        new_ds[target_variable].attrs["target_grid"] = target_grid
-        new_ds[target_variable].attrs["grid_spacing"] = str(range_var_attrs) + "m"
 
     prov_dict = echopype_prov_attrs(process_type="processing")
     prov_dict["processing_function"] = "commongrid.resample_to_geometry"
     new_ds = new_ds.assign_attrs(prov_dict)
     new_ds = insert_input_processing_level(new_ds, ds_Sv)
-
-    if "echo_range" in ds_Sv:
-        new_ds["echo_range"].attrs = ds_Sv["echo_range"].attrs
+    new_ds["echo_range"].attrs = ds_Sv["echo_range"].attrs
 
     return new_ds

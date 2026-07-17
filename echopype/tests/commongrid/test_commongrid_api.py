@@ -715,95 +715,134 @@ def test__weighted_mean_kernel(scenario, source_params, target_params, expected_
         f"Scenario '{scenario}' failed energy conservation."
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    ("er_type"),
-    [
-        ("regular"),
-    ],
-)
+@pytest.mark.parametrize("er_type", ["regular", "irregular"])
 def test_resample_target_channel_same(request, er_type):
-    """Testing that the resampling function preserves the target channel"""
-    if er_type == "regular":
-        ds_Sv = request.getfixturevalue("ds_Sv_echo_range_regular")
-    else:
-        ds_Sv = request.getfixturevalue("ds_Sv_echo_range_irregular")
+    """Test that resampling preserves the target channel."""
 
+    ds_Sv = request.getfixturevalue(f"ds_Sv_echo_range_{er_type}")
     channel = ds_Sv["channel"].values[0]
 
-    ds_regridded = ep.commongrid.resample_to_geometry(ds_Sv.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}), target_variable="Sv", target_channel=channel)
-
-    original_channel = ds_Sv["Sv"].sel(channel=channel)
-    reggrided_channel = ds_regridded["Sv"].sel(channel=channel)
+    ds_regridded = ep.commongrid.resample_to_geometry(
+        ds_Sv.chunk(
+            {
+                "channel": 1,
+                "ping_time": 1000,
+                "range_sample": -1,
+            }
+        ),
+        target_variable="Sv",
+        is_log=True,
+        target_channel=channel,
+    )
 
     xr.testing.assert_allclose(
-        reggrided_channel, 
-        original_channel,
+        ds_regridded["Sv"].sel(channel=channel),
+        ds_Sv["Sv"].sel(channel=channel),
         rtol=1e-12,
-        atol=1e-12)
+        atol=1e-12,
+    )
+
+    # Channel must remain both a dimension and a coordinate
+    assert "channel" in ds_regridded.dims
+    assert "channel" in ds_regridded.coords
+
+    xr.testing.assert_equal(
+        ds_regridded["channel"],
+        ds_Sv["channel"],
+    )
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("er_type"),
-    [
-        ("regular"),
-    ],
-)
+@pytest.mark.parametrize("er_type", ["regular", "irregular"])
 def test_resample_with_channel(request, er_type, calculate_total_energy):
-    """Testing the resample_to_geometry by evaluating energy loss after resampling using a target channel"""
-    if er_type == "regular":
-        ds_Sv = request.getfixturevalue("ds_Sv_echo_range_regular")
-    else:
-        ds_Sv = request.getfixturevalue("ds_Sv_echo_range_irregular")
+    """Test energy conservation when resampling to a target channel."""
+
+    ds_Sv = request.getfixturevalue(f"ds_Sv_echo_range_{er_type}")
     channel = ds_Sv["channel"].values[0]
 
-    ds_regridded = ep.commongrid.resample_to_geometry(ds_Sv.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}), target_variable="Sv", target_channel=channel)
+    ds_regridded = ep.commongrid.resample_to_geometry(
+        ds_Sv.chunk(
+            {
+                "channel": 1,
+                "ping_time": 1000,
+                "range_sample": -1,
+            }
+        ),
+        target_variable="Sv",
+        is_log=True,
+        target_channel=channel,
+    )
 
     channels = ds_Sv["channel"].values
-    total_energy_original = [calculate_total_energy(ds_Sv, ch) for ch in channels]
-    total_energy_regridded = [calculate_total_energy(ds_regridded, ch) for ch in channels]
+
+    total_energy_original = [
+        calculate_total_energy(ds_Sv, ch)
+        for ch in channels
+    ]
+    total_energy_regridded = [
+        calculate_total_energy(ds_regridded, ch)
+        for ch in channels
+    ]
 
     np.testing.assert_allclose(
-        total_energy_original, 
-        total_energy_regridded, 
+        total_energy_original,
+        total_energy_regridded,
         rtol=1e-3,
-        err_msg="Total energy was not conserved during regridding!"
+        err_msg="Total energy was not conserved during regridding!",
     )
 
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("er_type"),
-    [
-        ("regular"),  
-    ],
-)
+@pytest.mark.parametrize("er_type", ["regular", "irregular"])
 def test_resample_with_grid(request, er_type, calculate_total_energy):
-    """Testing the resample_to_geometry by evaluating energy loss after resampling using a target grid"""
-    if er_type == "regular":
-        ds_Sv = request.getfixturevalue("ds_Sv_echo_range_regular")
-    else:
-        ds_Sv = request.getfixturevalue("ds_Sv_echo_range_irregular")
-    
+    """Test energy conservation when resampling to a custom target grid."""
+
+    ds_Sv = request.getfixturevalue(f"ds_Sv_echo_range_{er_type}")
     channel = ds_Sv["channel"].values[0]
-    
+
+    target_grid = ds_Sv["echo_range"].sel(
+        channel=channel,
+        drop=True,
+    )
+
     ds_regridded = ep.commongrid.resample_to_geometry(
-        ds_Sv.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}), 
-        target_variable="Sv", 
-        target_grid=ds_Sv.chunk({"channel": 1, "ping_time": 500, "range_sample": -1})["echo_range"].sel(channel=channel)
+        ds_Sv.chunk(
+            {
+                "channel": 1,
+                "ping_time": 1000,
+                "range_sample": -1,
+            }
+        ),
+        target_variable="Sv",
+        is_log=True,
+        target_grid=target_grid,
     )
 
     channels = ds_Sv["channel"].values
-    
-    # We can now call the factory function returned by the fixture
-    total_energy_original = [calculate_total_energy(ds_Sv, ch) for ch in channels]
-    total_energy_regridded = [calculate_total_energy(ds_regridded, ch) for ch in channels]
+
+    total_energy_original = [
+        calculate_total_energy(ds_Sv, ch)
+        for ch in channels
+    ]
+    total_energy_regridded = [
+        calculate_total_energy(ds_regridded, ch)
+        for ch in channels
+    ]
 
     np.testing.assert_allclose(
-        total_energy_original, 
-        total_energy_regridded, 
+        total_energy_original,
+        total_energy_regridded,
         rtol=1e-3,
-        err_msg="Total energy was not conserved during regridding!"
+        err_msg="Total energy was not conserved during regridding!",
     )
+
+    # Every channel must receive the complete ping-dependent target geometry
+    for ch in channels:
+        expected_grid = target_grid.expand_dims(channel=[ch])
+
+        xr.testing.assert_allclose(
+            ds_regridded["echo_range"].sel(channel=[ch]),
+            expected_grid,
+        )
 
 # Integration test with EK80 data
 
@@ -846,20 +885,27 @@ def test_range_spacing(ek80_path):
 
 @pytest.mark.unit
 def test_resample_log_variable_sp(ds_Sv_echo_range_regular):
-    """
-    Test that Sp variables are resampled through the same
-    linear-domain averaging pathway as Sv, with a warning.
-    """
+    """Test explicitly resampling Sp in the logarithmic domain."""
 
     ds = ds_Sv_echo_range_regular.copy()
     ds["Sp"] = ds["Sv"].copy()
 
     channel = ds["channel"].values[0]
 
-    with pytest.warns(UserWarning, match="primarily intended and validated for Sv"):
+    with pytest.warns(
+        UserWarning,
+        match="primarily intended and validated for Sv",
+    ):
         ds_regridded = ep.commongrid.resample_to_geometry(
-            ds.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
+            ds.chunk(
+                {
+                    "channel": 1,
+                    "ping_time": 1000,
+                    "range_sample": -1,
+                }
+            ),
             target_variable="Sp",
+            is_log=True,
             target_channel=channel,
         )
 
@@ -872,20 +918,27 @@ def test_resample_log_variable_sp(ds_Sv_echo_range_regular):
     
 @pytest.mark.unit
 def test_resample_log_variable_ts(ds_Sv_echo_range_regular):
-    """
-    Test that TS variables are resampled through the same
-    linear-domain averaging pathway as Sv, with a warning.
-    """
+    """Test explicitly resampling TS in the logarithmic domain."""
 
     ds = ds_Sv_echo_range_regular.copy()
     ds["TS"] = ds["Sv"].copy()
 
     channel = ds["channel"].values[0]
 
-    with pytest.warns(UserWarning, match="primarily intended and validated for Sv"):
+    with pytest.warns(
+        UserWarning,
+        match="primarily intended and validated for Sv",
+    ):
         ds_regridded = ep.commongrid.resample_to_geometry(
-            ds.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
+            ds.chunk(
+                {
+                    "channel": 1,
+                    "ping_time": 1000,
+                    "range_sample": -1,
+                }
+            ),
             target_variable="TS",
+            is_log=True,
             target_channel=channel,
         )
 
@@ -897,12 +950,24 @@ def test_resample_log_variable_ts(ds_Sv_echo_range_regular):
     )
     
 @pytest.mark.unit
-def test_resample_requires_exactly_one_target(ds_Sv_echo_range_regular):
-    target_channel = ds_Sv_echo_range_regular.channel.isel(channel=0).item()
+def test_resample_requires_exactly_one_target(
+    ds_Sv_echo_range_regular,
+):
+    """
+    Test that exactly one source of target geometry is required.
+
+    Resampling without either a target channel or a custom target grid
+    is undefined. Providing both is ambiguous and must also raise an error.
+    """
+
+    target_channel = (
+        ds_Sv_echo_range_regular.channel.isel(channel=0).item()
+    )
     target_grid = ds_Sv_echo_range_regular["echo_range"].sel(
         channel=target_channel
     )
 
+    # Neither target_channel nor target_grid is provided
     with pytest.raises(
         ValueError,
         match="Provide exactly one of target_channel or target_grid",
@@ -910,8 +975,10 @@ def test_resample_requires_exactly_one_target(ds_Sv_echo_range_regular):
         ep.commongrid.resample_to_geometry(
             ds_Sv_echo_range_regular,
             target_variable="Sv",
+            is_log=True,
         )
 
+    # Both target_channel and target_grid are provided
     with pytest.raises(
         ValueError,
         match="Provide exactly one of target_channel or target_grid",
@@ -919,28 +986,142 @@ def test_resample_requires_exactly_one_target(ds_Sv_echo_range_regular):
         ep.commongrid.resample_to_geometry(
             ds_Sv_echo_range_regular,
             target_variable="Sv",
+            is_log=True,
             target_channel=target_channel,
             target_grid=target_grid,
         )
         
 @pytest.mark.unit
-def test_resample_angle_variable_warns(ds_Sv_echo_range_regular):
+def test_resample_linear_angle_variable(
+    ds_Sv_echo_range_regular,
+):
     """
-    Angle variables are currently resampled geometrically.
-    A warning should be emitted.
+    Test resampling an angle variable in the linear domain.
+
+    Negative angle values must be preserved because the positive-value
+    mask is applied only when resampling logarithmic variables.
     """
 
     ds = ds_Sv_echo_range_regular.copy()
-    ds["angle_alongship"] = xr.zeros_like(ds["Sv"])
+    ds["angle_alongship"] = xr.full_like(ds["Sv"], -1.0)
 
     channel = ds["channel"].values[0]
 
-    with pytest.warns(UserWarning, match="Angle variables are resampled geometrically"):
-        ep.commongrid.resample_to_geometry(
-            ds.chunk({"channel": 1, "ping_time": 1000, "range_sample": -1}),
+    with pytest.warns(
+        UserWarning,
+        match="Angle variables are resampled geometrically",
+    ):
+        ds_regridded = ep.commongrid.resample_to_geometry(
+            ds.chunk(
+                {
+                    "channel": 1,
+                    "ping_time": 1000,
+                    "range_sample": -1,
+                }
+            ),
             target_variable="angle_alongship",
+            is_log=False,
             target_channel=channel,
         )
+
+    xr.testing.assert_allclose(
+        ds_regridded["angle_alongship"].sel(channel=channel),
+        ds["angle_alongship"].sel(channel=channel),
+        rtol=1e-12,
+        atol=1e-12,
+    )
+
+@pytest.mark.unit
+def test_resample_with_ping_dependent_irregular_target_grid(
+    ds_Sv_echo_range_regular,
+):
+    """
+    Test a target grid whose spacing is nonuniform along range and
+    changes between pings.
+
+    The output echo_range for every channel must exactly match the
+    supplied two-dimensional target grid.
+    """
+
+    ds = ds_Sv_echo_range_regular
+    channel = ds["channel"].values[0]
+
+    base_grid = ds["echo_range"].sel(
+        channel=channel,
+        drop=True,
+    )
+
+    range_min = base_grid.min("range_sample", skipna=True)
+    range_max = base_grid.max("range_sample", skipna=True)
+
+    normalized_range = (
+        (base_grid - range_min) / (range_max - range_min)
+    )
+
+    # A different exponent for each ping makes the spacing both
+    # nonuniform along range and different between pings.
+    exponent = xr.DataArray(
+        np.linspace(1.1, 1.5, ds.sizes["ping_time"]),
+        dims="ping_time",
+        coords={"ping_time": ds["ping_time"]},
+    )
+
+    target_grid = (
+        range_min
+        + (range_max - range_min) * normalized_range**exponent
+    )
+    target_grid.name = "echo_range"
+
+    # Confirm that the test grid is genuinely nonuniform.
+    first_ping_spacing = (
+        target_grid.isel(ping_time=0)
+        .diff("range_sample")
+        .dropna("range_sample")
+    )
+
+    assert not np.allclose(
+        first_ping_spacing,
+        first_ping_spacing.isel(range_sample=0),
+    )
+
+    # Confirm that the spacing also changes between pings.
+    last_ping_spacing = (
+        target_grid.isel(ping_time=-1)
+        .diff("range_sample")
+        .dropna("range_sample")
+    )
+
+    assert not np.allclose(
+        first_ping_spacing,
+        last_ping_spacing,
+    )
+
+    ds_regridded = ep.commongrid.resample_to_geometry(
+        ds.chunk(
+            {
+                "channel": 1,
+                "ping_time": 1000,
+                "range_sample": -1,
+            }
+        ),
+        target_variable="Sv",
+        is_log=True,
+        target_grid=target_grid,
+    )
+
+    for ch in ds_regridded["channel"].values:
+        expected_grid = target_grid.expand_dims(channel=[ch])
+
+        xr.testing.assert_allclose(
+            ds_regridded["echo_range"].sel(channel=[ch]),
+            expected_grid,
+        )
+
+    assert ds_regridded["Sv"].dims == (
+        "channel",
+        "ping_time",
+        "range_sample",
+    )
 
 @pytest.mark.integration
 def test_resample_matches_echoview_match_geometry(test_path):
