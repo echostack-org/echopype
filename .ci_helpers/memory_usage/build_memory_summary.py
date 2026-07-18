@@ -12,10 +12,10 @@ groups = {
     "windows": [],
 }
 
-linestyles = {
-    "3.11": "-",
-    "3.12": "--",
-    "3.13": ":",
+PYTHON_LINE_STYLES = {
+    "3.12": "-",
+    "3.13": "--",
+    "3.14": ":",
 }
 
 colors = {
@@ -85,7 +85,7 @@ for ax, (group, title) in zip(axes, subplot_order):
             used,
             label=pyver,
             color=colors[group],
-            linestyle=linestyles.get(pyver, "-"),
+            linestyle=PYTHON_LINE_STYLES.get(pyver, "-"),
             linewidth=2,
         )
 
