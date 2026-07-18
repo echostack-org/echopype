@@ -327,7 +327,8 @@ def add_location(
             extra_msg = (
                 f" Multiple NMEA sentence types detected ({', '.join(sentence_types)}), "
                 "which may have different resolution and produce duplicate timestamps. "
-                "Consider specifying `nmea_sentence` to select a single GPS message type."
+                "Consider specifying `nmea_sentence` to select a single GPS message type. "
+                "Only the first entry with the same timestamp will be used for interpolation."
             )
         elif len(sentence_types) == 1:
             extra_msg = (
