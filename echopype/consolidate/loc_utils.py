@@ -114,9 +114,6 @@ def check_and_drop_loc_time_dim_duplicates(
     extra_msg: str = "",
 ) -> xr.DataArray:
     """Check for and drop duplicates in time_dim_name.
-
-    If duplicate time values are found, they are removed (keeping the first
-    occurrence) and a warning is logged. The deduplicated DataArray is returned.
     """
     time_vals = da[time_dim_name].data
     if len(np.unique(time_vals)) != len(time_vals):
