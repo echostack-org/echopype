@@ -2,11 +2,11 @@ from collections import defaultdict
 from struct import unpack
 
 import fsspec
+import numpy as np
 
 from ..utils.log import _init_logger
 from ..utils.misc import camelcase2snakecase
 from .parse_base import ParseBase
-import numpy as np
 
 logger = _init_logger(__name__)
 
@@ -203,7 +203,7 @@ class ParseBI500(ParseBase):
                 unpacked_data = unpack(PING_FORMAT, loaded_data)
 
                 # Convert unpacked data to dB units.
-                unpacked_data = 10 * np.log10(2)/256
+                unpacked_data = 10 * np.log10(2) / 256
                 self.unpacked_data["pelagic"].append(unpacked_data[:PELAGIC_COUNT])
                 self.unpacked_data["bottom"].append(
                     unpacked_data[PELAGIC_COUNT : PELAGIC_COUNT + BOTTOM_COUNT]

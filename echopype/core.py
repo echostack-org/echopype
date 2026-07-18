@@ -19,7 +19,9 @@ from .convert.set_groups_ek80 import SetGroupsEK80
 
 if TYPE_CHECKING:
     # Please keep SonarModelsHint updated with the keys of the SONAR_MODELS dict
-    SonarModelsHint = Literal["AZFP", "AZFP6", "EK60", "ES70", "EK80", "ES80", "EA640", "AD2CP", "BI500GI"]
+    SonarModelsHint = Literal[
+        "AZFP", "AZFP6", "EK60", "ES70", "EK80", "ES80", "EA640", "AD2CP", "BI500GI"
+    ]
     PathHint = Union[str, os.PathLike, FSMap]
     FileFormatHint = Literal[".nc", ".zarr"]
     EngineHint = Literal["netcdf4", "zarr"]
