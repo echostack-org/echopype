@@ -6,6 +6,7 @@ import fsspec
 from ..utils.log import _init_logger
 from ..utils.misc import camelcase2snakecase
 from .parse_base import ParseBase
+import numpy as np
 
 logger = _init_logger(__name__)
 
@@ -200,6 +201,9 @@ class ParseBI500(ParseBase):
                 TRACE_FORMAT = "fffff" * TRACE_COUNT
                 PING_FORMAT = PELAGIC_FORMAT + BOTTOM_FORMAT + TRACE_FORMAT
                 unpacked_data = unpack(PING_FORMAT, loaded_data)
+
+                # Convert unpacked data to dB units.
+                unpacked_data = 10 * np.log10(2)/256
                 self.unpacked_data["pelagic"].append(unpacked_data[:PELAGIC_COUNT])
                 self.unpacked_data["bottom"].append(
                     unpacked_data[PELAGIC_COUNT : PELAGIC_COUNT + BOTTOM_COUNT]
