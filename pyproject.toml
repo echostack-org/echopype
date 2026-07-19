@@ -117,7 +117,7 @@ py-modules = ["_echopype_version"]
 include = ["echopype*"]
 
 [tool.setuptools_scm]
-fallback_version = "unknown"
+fallback_version = "0.0"
 local_scheme = "node-and-date"
 version_file = "_echopype_version.py"
 version_file_template = 'version = "{version}"  # noqa'
