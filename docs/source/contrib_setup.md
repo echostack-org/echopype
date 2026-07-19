@@ -28,7 +28,7 @@ To create an environment for developing Echopype, we recommend the following ste
     git remote add upstream https://github.com/echostack-org/echopype.git
     ```
 
-2. Create a virutal Python environment. We suggest doing this with `conda` or `uv`.
+2. Create a virtual Python environment. We suggest doing this with `conda` or `uv`.
 
   - For a conda environment using the conda-forge channel and follow the steps below:
 
@@ -146,7 +146,7 @@ uv run --group test pytest -n=auto
 ```
 
 The first time you run the tests the test data will be downloaded to your computer. This can take
-some time (e.g., 10-20 minutes). Progress on the downloading is shown if you add the `-s` option to 
+some time (e.g., 10-20 minutes). Progress on the downloading is shown if you add the `-s` option to
 the command above.
 
 TODO - explain how to setup the S3 stuff (or use the ci_helpers above?).
