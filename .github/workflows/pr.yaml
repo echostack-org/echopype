@@ -36,7 +36,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -135,7 +135,7 @@ jobs:
           df -h
 
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -150,7 +150,7 @@ jobs:
         run: python -m pip install -e ".[test,plot]"
 
       - name: Cache echopype test data
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ env.XDG_CACHE_HOME }}/echopype
           key: ep-data-${{ env.ECHOPYPE_DATA_VERSION }}
@@ -248,7 +248,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6.2.0
+      - uses: actions/setup-python@v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -320,7 +320,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6.2.0
+      - uses: actions/setup-python@v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip

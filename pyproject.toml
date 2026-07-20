@@ -90,6 +90,7 @@ docs = [
     "sphinx-panels",
     "sphinx-thebe",
     "sphinx-togglebutton",
+    "sphinxcontrib-bibtex",
     "sphinxcontrib-mermaid",
 ]
 
