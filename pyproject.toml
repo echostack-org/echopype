@@ -93,6 +93,7 @@ docs = [
     "sphinx-thebe",
     "sphinx-togglebutton",
     "sphinxcontrib-mermaid",
+    "sphinx_-inline-tabs",
 ]
 
 dev = [

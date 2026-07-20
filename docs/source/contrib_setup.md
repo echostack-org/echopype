@@ -28,45 +28,35 @@ To create an environment for developing Echopype, we recommend the following ste
     git remote add upstream https://github.com/echostack-org/echopype.git
     ```
 
-2. Create a virtual Python environment. We suggest doing this with `conda` or `uv`.
+2. Create a virtual Python environment and build an editable version of the echopype package. We
+suggest doing this with `conda` or `uv`.
 
-  - For a conda environment using the conda-forge channel and follow the steps below:
+```{tab} Conda
 
-      ```shell
-      # Create a conda environment
-      conda create -c conda-forge -n echopype_dev --yes python=3.12
+  ```shell
+  # Create a conda environment
+  conda create -c conda-forge -n echopype_dev --yes python=3.12
 
-      # Activate the environment
-      conda activate echopype
+  # Activate the environment
+  conda activate echopype
 
-      # Optional but recommended for Jupyter development
-      conda install -c conda-forge ipykernel
+  # Optional but recommended for Jupyter development
+  conda install -c conda-forge ipykernel
 
-      # Install echopype in editable mode with development dependencies
-      pip install -e ".[dev,test]"
+  # Install echopype in editable mode with development dependencies
+  pip install -e ".[dev,test]"
 
-      # Optional extras
-      # pip install -e ".[plot]"
-      # pip install -e ".[docs]"
-      ```
+  # Optional extras
+  # pip install -e ".[plot]"
+  # pip install -e ".[docs]"
+  ```
 
-  - If not already, install `uv` following the instructions [here](https://docs.astral.sh/uv/getting-started/installation/)
-  and then simply type `uv build` in the echopype repo directory. This will create an virtual environment,
+```{tab} Uv
+
+  - Install `uv` (instructions [here](https://docs.astral.sh/uv/getting-started/installation/))
+  - Type `uv build` in the echopype repo directory. This will create an virtual environment,
 install the necessary packages, and create an editable build of the package ready for use.
-
-For a fresh local setup, enable the Pooch-based test data fetch before running tests.
-
-On Linux/macOS:
-```shell
-export USE_POOCH=True
 ```
-
-On Windows PowerShell:
-```shell
-$env:USE_POOCH="True"
-```
-
-This allows the required test data to be downloaded into the local Pooch cache on first run.
 
 :::{tip}
 If using conda, we recommend using Mamba to get around Conda's sometimes slow or stuck behavior when solving dependencies.
@@ -75,31 +65,35 @@ The easiest way to get a minimal installation is through [Miniforge](https://con
 One can replace `conda` with `mamba` in the above commands when creating the environment and installing additional packages.
 :::
 
-
-
 ## Testing infrastructure
 
 ### Test data files
 
-Currently, test data are stored in a private Google Drive folder and
-made available via the [`cormorack/http`](https://hub.docker.com/r/cormorack/http)
-Docker image on Docker hub.
-The image is rebuilt daily when new test data are added.
-If your tests require adding new test data, ping the maintainers (@leewujung, @ctuguinay)
-to get them added to the the Google Drive.
+For a fresh local setup, enable the Pooch-based test data fetch before running tests.
 
-We hope to migrate all test data to GitHub Release Assets in the near future,
-to keep test data versioned and directly associated with the repo.
+```{tab} Linux/macOS
+  ```shell
+  export USE_POOCH=True
+  ```
+
+```{tab} Windows PowerShell
+  ```shell
+  $env:USE_POOCH="True"
+  ```
+
+This allows the required test data to be downloaded into the local Pooch cache on first run.
 
 
-### Running the tests (conda)
+### Running the tests
 
 To run echopype tests found in `echopype/tests`,
-[`Docker`](https://docs.docker.com/get-docker/) needs to be installed.
+[`Docker`](https://docs.docker.com/get-docker/) needs to be installed for non-Windows environments.
 [`docker-compose`](https://docs.docker.com/compose/) is also needed,
 but it should already be installed in the development environment created above.
 
 To run the tests:
+
+```{tab} Linux/macOS
 ```shell
 # Install and/or deploy the echopype docker containers for testing.
 # Test data files will be downloaded
@@ -113,7 +107,25 @@ python .ci_helpers/run-test.py --local --pytest-args="-vv"
 python .ci_helpers/docker/setup-services.py --tear-down
 ```
 
-The tests include reading and writing from locally set up (via docker)
+```{tab} Windows
+```shell
+# Starts a server to provide test access to S3 data
+uv run --group test python .ci_helpers\setup-services-windows.py start
+
+# Runs the tests
+uv run --group test python .ci_helpers/run-test.py --local --pytest-args="-vv"
+# or use
+# uv run --group test pytest -n=auto
+
+# Stops the test data server:
+uv run --group test python .ci_helpers\setup-services-windows.py stop
+```
+
+The first time you run the tests the test data will be downloaded to your computer. This can take
+some time (e.g., 10-20 minutes). 
+
+
+The tests include reading and writing from locally set up
 http and [S3 object-storage](https://en.wikipedia.org/wiki/Amazon_S3) sources,
 the latter via [minio](https://minio.io).
 
@@ -134,23 +146,8 @@ python .ci_helpers/run-test.py --local --pytest-args="-vv"  echopype/tests/conve
 
 For `run-test.py` usage information, use the ``-h`` argument:
 ```shell
-`python .ci_helpers/run-test.py -h`
+python .ci_helpers/run-test.py -h
 ```
-
-### Running the tests (uv)
-
-To run the echopype tests, use this command:
-
-```shell
-uv run --group test pytest -n=auto
-```
-
-The first time you run the tests the test data will be downloaded to your computer. This can take
-some time (e.g., 10-20 minutes). Progress on the downloading is shown if you add the `-s` option to
-the command above.
-
-TODO - explain how to setup the S3 stuff (or use the ci_helpers above?).
-
 
 ## pre-commit hooks
 
@@ -207,21 +204,21 @@ Echopype documentation (https://echopype.readthedocs.io) is based on [Jupyter Bo
 which are rendered under the hood with [Sphinx](https://www.sphinx-doc.org).
 The documentation is hosted on [Read The Docs](https://readthedocs.org).
 
-To build the documentation locally in a conda environment, run:
-```shell
-jupyter-book build docs/source --path-output docs
-```
+To build the documentation locally, run:
+```{tab} Conda
+  ```shell
+  jupyter-book build docs/source --path-output docs
+  ```
 
-In a uv-managed environment, run
-```shell
-uv run --group docs sphinx-build -b html .\docs\source .\docs\_build
-```
-(change \ to / if running the command on Linux).
+```{tab} Uv
+  ```shell
+  uv run --group docs sphinx-build -b html ./docs/source ./docs/_build
+  ```
 
-To view the HTML files generated by Jupyter Book, open `docs/_build/html/index.html` in your browser.
+To view the generated HTML files open `docs/_build/html/index.html` in your browser.
 
 For some quick orientation of where things are:
-- Documentation dependencies are defined in the `docs` optional dependency group in `pyproject.toml`
+- Documentation dependencies are defined in the `docs` dependency group in `pyproject.toml`
 - The documentation source files are in the `docs/source` directory
 - The Jupyter Book [configurations](https://jupyterbook.org/en/stable/customize/config.html)
   is in `docs/source/_config.yml`
