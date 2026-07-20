@@ -55,7 +55,7 @@ suggest doing this with `conda` or `uv`.
 
   ```shell
   # Create .venv and install echopype in editable mode
-  # with the default development and testing dependencies 
+  # with the default development and testing dependencies
   uv sync
   ```
 
