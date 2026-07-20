@@ -122,7 +122,7 @@ uv run --group test python .ci_helpers\setup-services-windows.py stop
 ```
 
 The first time you run the tests the test data will be downloaded to your computer. This can take
-some time (e.g., 10-20 minutes). 
+some time (e.g., 10-20 minutes).
 
 
 The tests include reading and writing from locally set up
