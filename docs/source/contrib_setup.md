@@ -34,29 +34,30 @@ suggest doing this with `conda` or `uv`.
 ```{tab} Conda
 
   ```shell
-  # Create a conda environment
-  conda create -c conda-forge -n echopype_dev --yes python=3.12
+  # Create and activate the development environment
+  conda create -c conda-forge -n echopype-dev --yes python=3.12
+  conda activate echopype-dev
 
-  # Activate the environment
-  conda activate echopype
+  # Upgrade pip to support dependency groups
+  python -m pip install --upgrade pip
 
-  # Optional but recommended for Jupyter development
-  conda install -c conda-forge ipykernel
+  # Install echopype in editable mode with development and testing dependencies
+  python -m pip install -e . --group dev --group test
 
-  # Install echopype in editable mode with development dependencies
-  pip install -e ".[dev,test]"
-
-  # Optional extras
-  # pip install -e ".[plot]"
-  # pip install -e ".[docs]"
+  # Optional plotting dependencies
+  # python -m pip install -e ".[plot]"
   ```
 
 ```{tab} Uv
 
-  - Install `uv` (instructions [here](https://docs.astral.sh/uv/getting-started/installation/))
-  - Type `uv build` in the echopype repo directory. This will create an virtual environment,
-install the necessary packages, and create an editable build of the package ready for use.
-```
+  - Install `uv` (instructions [here](https://docs.astral.sh/uv/getting-started/installation/)).
+  - From the echopype repository, run:
+
+  ```shell
+  # Create .venv and install echopype in editable mode
+  # with development and testing dependencies
+  uv sync --group dev --group test
+  ```
 
 :::{tip}
 If using conda, we recommend using Mamba to get around Conda's sometimes slow or stuck behavior when solving dependencies.
@@ -95,15 +96,16 @@ To run the tests:
 
 ```{tab} Linux/macOS
 ```shell
-# Install and/or deploy the echopype docker containers for testing.
-# Test data files will be downloaded
+# Install and deploy the test services
 python .ci_helpers/docker/setup-services.py --deploy
 
-# Run all the tests. But first make sure the
-# echopype development conda environment is activated
-python .ci_helpers/run-test.py --local --pytest-args="-vv"
+# With Conda
+python -m pytest -n auto
 
-# When done, "tear down" the docker containers
+# Or with uv
+uv run --group test pytest -n auto
+
+# Tear down the test services
 python .ci_helpers/docker/setup-services.py --tear-down
 ```
 
@@ -151,7 +153,7 @@ python .ci_helpers/run-test.py -h
 
 ## pre-commit hooks
 
-The echopype development conda environment includes [pre-commit](https://pre-commit.com),
+The echopype development environment includes [pre-commit](https://pre-commit.com),
 and useful pre-commit "hooks" have been configured in the
 [.pre-commit-config.yaml file](https://github.com/echostack-org/echopype/blob/main/.pre-commit-config.yaml).
 Current hooks include file formatting (linting) checks
@@ -206,11 +208,17 @@ The documentation is hosted on [Read The Docs](https://readthedocs.org).
 
 To build the documentation locally, run:
 ```{tab} Conda
+
   ```shell
+  # Install documentation dependencies
+  python -m pip install --group docs
+
+  # Build the documentation
   jupyter-book build docs/source --path-output docs
   ```
 
 ```{tab} Uv
+
   ```shell
   uv run --group docs sphinx-build -b html ./docs/source ./docs/_build
   ```

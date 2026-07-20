@@ -93,21 +93,22 @@ docs = [
     "sphinx-thebe",
     "sphinx-togglebutton",
     "sphinxcontrib-mermaid",
-    "sphinx_-inline-tabs",
+    "sphinx-inline-tabs",
 ]
 
 dev = [
     "black",
     "check-manifest",
     "codespell",
+    "ipykernel",
     "isort",
     "mypy",
     "pre-commit",
     "pylint",
+    "ruff",
     "setuptools_scm",
     "twine",
     "wheel",
-    "ruff",
 ]
 
 [tool.setuptools]
