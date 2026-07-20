@@ -131,6 +131,9 @@ markers = [
     "integration: marks tests as integration tests",
 ]
 
+[tool.uv]
+exclude-newer = "7 days"
+
 [tool.black]
 line-length = 100
 
