@@ -51,12 +51,12 @@ suggest doing this with `conda` or `uv`.
 ```{tab} Uv
 
   - Install `uv` (instructions [here](https://docs.astral.sh/uv/getting-started/installation/)).
-  - From the echopype repository, run:
+  - From the echopype repository directory, run:
 
   ```shell
   # Create .venv and install echopype in editable mode
-  # with development and testing dependencies
-  uv sync --group dev --group test
+  # with the default development and testing dependencies 
+  uv sync
   ```
 
 :::{tip}
@@ -103,7 +103,7 @@ python .ci_helpers/docker/setup-services.py --deploy
 python -m pytest -n auto
 
 # Or with uv
-uv run --group test pytest -n auto
+uv run pytest -n auto
 
 # Tear down the test services
 python .ci_helpers/docker/setup-services.py --tear-down
@@ -112,15 +112,15 @@ python .ci_helpers/docker/setup-services.py --tear-down
 ```{tab} Windows
 ```shell
 # Starts a server to provide test access to S3 data
-uv run --group test python .ci_helpers\setup-services-windows.py start
+uv run python .ci_helpers\setup-services-windows.py start
 
 # Runs the tests
-uv run --group test python .ci_helpers/run-test.py --local --pytest-args="-vv"
+uv run python .ci_helpers/run-test.py --local --pytest-args="-vv"
 # or use
-# uv run --group test pytest -n=auto
+# uv run pytest -n auto
 
 # Stops the test data server:
-uv run --group test python .ci_helpers\setup-services-windows.py stop
+uv run python .ci_helpers\setup-services-windows.py stop
 ```
 
 The first time you run the tests the test data will be downloaded to your computer. This can take
@@ -135,7 +135,8 @@ the latter via [minio](https://minio.io).
 will execute all tests.
 The entire test suite can take a few minutes to run.
 You can use `run-test.py` to run only tests for specific subpackages
-(`convert`, `calibrate`, etc) by passing a comma-separated list:
+(`convert`, `calibrate`, etc) by passing a comma-separated list. If using uv, prepend these commands
+with `uv run`:
 ```shell
 # Run only tests associated with the calibrate and mask subpackages
 python .ci_helpers/run-test.py --local --pytest-args="-vv" echopype/calibrate/calibrate_ek.py,echopype/mask/api.py
