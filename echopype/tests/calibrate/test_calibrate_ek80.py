@@ -27,11 +27,6 @@ def ek80_ext_path(test_path):
 def ek80_multiplex_path(test_path):
     return test_path["EK80_MULTIPLEX"]
 
-@pytest.fixture
-def ek80_multiplex_path(test_path):  # noqa: F811
-    return test_path["EK80_MULTI"]
-
-
 @pytest.mark.integration
 def test_ek80_transmit_chirp(ek80_cal_path, ek80_ext_path):
     """
