@@ -57,7 +57,7 @@ Learn more about echopype in the official documentation at https://echopype.read
 
 ## Contributing
 
-You can find information about how to contribute to echopype at our [Contributing Page](https://echopype.readthedocs.io/en/latest/contributing.html).
+You can find information about how to contribute to echopype at our [Contributing Page](https://echopype.readthedocs.io/en/latest/contrib_start.html#contributing-to-echopype).
 
 <!-- ## <img src="docs/source/images/GSoC-logo-horizontal.svg" alt="Google Summer of Code logo" width="300" style="padding-right: 50px; vertical-align: middle">
 
