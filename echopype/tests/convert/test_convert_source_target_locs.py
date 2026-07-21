@@ -334,7 +334,7 @@ def test_convert_ek(
         return
 
     try:
-        if output_save_path is not None and (output_save_path.startswith('/') or output_save_path.startswith('\\')):
+        if output_save_path is not None and (output_save_path.startswith('/') or output_save_path.startswith('\\')):  # noqa: E501
             with TemporaryDirectory() as tmpdir:
                 output_save_path = tmpdir + output_save_path
                 to_file(

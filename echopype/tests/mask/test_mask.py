@@ -1,16 +1,17 @@
-import pathlib
-
-import pytest
-
-import numpy as np
-import xarray as xr
-import dask.array
+from typing import List, Union, Optional
 import tempfile
+import pathlib
 import os
+
+import pandas as pd  # noqa: F401
+import xarray as xr
+import numpy as np
+import dask.array
+import pytest
 
 import echopype as ep
 import echopype.mask
-from echopype.mask.api import _check_mask_dim_alignment, _validate_and_collect_mask_input, _check_var_name_fill_value
+from echopype.mask.api import _check_mask_dim_alignment, _validate_and_collect_mask_input, _check_var_name_fill_value  # noqa: E501
 from echopype.mask.freq_diff import (
     _parse_freq_diff_eq,
     _check_freq_diff_source_Sv,
@@ -22,7 +23,7 @@ from echopype.mask import detect_seafloor
 # for schoals
 from echopype.mask import detect_shoal
 from scipy import ndimage as ndi
-from typing import List, Union, Optional
+from typing import List, Union, Optional  # noqa: F811
 
 @pytest.fixture
 def ek60_path(test_path):
@@ -163,11 +164,11 @@ def get_mock_source_ds_apply_mask(n: int, n_chan: int, is_delayed: bool) -> xr.D
 
     # create mock var1 and var2 DataArrays
     mock_var1_da = xr.DataArray(data=np.stack(mock_var_data),
-                                coords={"channel": ("channel", chan_vals, {"long_name": "channel name"}),
+                                coords={"channel": ("channel", chan_vals, {"long_name": "channel name"}),  # noqa: E501
                                         "ping_time": np.arange(n), "depth": np.arange(n)},
                                 attrs={"long_name": "variable 1"})
     mock_var2_da = xr.DataArray(data=np.stack(mock_var_data),
-                                coords={"channel": ("channel", chan_vals, {"long_name": "channel name"}),
+                                coords={"channel": ("channel", chan_vals, {"long_name": "channel name"}),  # noqa: E501
                                         "ping_time": np.arange(n),
                                         "range_sample": np.arange(n)},
                                 attrs={"long_name": "variable 2"})
@@ -701,7 +702,7 @@ def test_frequency_differencing(
     )
 
     if dask_array:
-        assert mock_Sv_ds["Sv"].chunks != None
+        assert mock_Sv_ds["Sv"].chunks != None  # noqa: E711
 
     # obtain the frequency-difference mask for mock_Sv_ds
     out = ep.mask.frequency_differencing(
@@ -804,13 +805,13 @@ def test_validate_and_collect_mask_input(
         for ind, da in enumerate(mask_out):
             # create known solution for mask
             mask_da = xr.DataArray(
-                data=[mask_np[ind].astype(bool) for i in range(n_chan)], coords=coords, name="mask_" + str(ind)
+                data=[mask_np[ind].astype(bool) for i in range(n_chan)], coords=coords, name="mask_" + str(ind)  # noqa: E501
             )
 
             assert da.identical(mask_da)
     else:
         # create known solution for mask
-        mask_da = xr.DataArray(data=[mask_np.astype(bool) for i in range(n_chan)], coords=coords, name="mask_0")
+        mask_da = xr.DataArray(data=[mask_np.astype(bool) for i in range(n_chan)], coords=coords, name="mask_0")  # noqa: E501
         assert mask_out.identical(mask_da)
 
 
@@ -864,27 +865,27 @@ def test_multi_mask_validate_and_collect_mask(mask_list: List[xr.DataArray]):
     [
         pytest.param(4, 2, 2.0, np.nan,
                      marks=pytest.mark.xfail(strict=True,
-                                             reason="This should fail because the var_name is not a string.")),
+                                             reason="This should fail because the var_name is not a string.")),  # noqa: E501
         pytest.param(4, 2, "var3", np.nan,
                      marks=pytest.mark.xfail(strict=True,
                                              reason="This should fail because mock_ds will "
                                                     "not have var_name=var3 in it.")),
         pytest.param(4, 2, "var2", "1.0",
                      marks=pytest.mark.xfail(strict=True,
-                                             reason="This should fail because fill_value is an incorrect type.")),
+                                             reason="This should fail because fill_value is an incorrect type.")),  # noqa: E501
         (4, 2, "var1", 1),
         (4, 2, "var1", 1.0),
         pytest.param(2, 1, "var1", np.identity(2)[None, :],
                      marks=pytest.mark.xfail(strict=True,
                      reason="This should fail because fill_value is an incorrect type.")),
         (2, 1, "var1", xr.DataArray(data=np.array([[[1.0, 0], [0, 1]]]),
-                                    coords={"channel": ["chan1"], "ping_time": [0, 1], "depth": [0, 1]})
+                                    coords={"channel": ["chan1"], "ping_time": [0, 1], "depth": [0, 1]})  # noqa: E501
          ),          
         pytest.param(4, 2, "var2",
                      xr.DataArray(data=np.array([[1.0, 0], [0, 1]]),
                                   coords={"ping_time": [0, 1], "range_sample": [0, 1]}),
                      marks=pytest.mark.xfail(strict=True,
-                                             reason="This should fail because fill_value is not the right shape.")),
+                                             reason="This should fail because fill_value is not the right shape.")),  # noqa: E501
     ],
     ids=["wrong_var_name_type", "no_var_name_ds", "wrong_fill_value_type", "fill_value_int",
          "fill_value_float", "fill_value_np_array", "fill_value_DataArray",
@@ -1150,7 +1151,7 @@ def test_apply_mask_NaN_elements():
         (True, [
         xr.DataArray(
             np.array([np.identity(2), np.identity(2)]),
-            coords={"channel": ["chan1", "chan2"], "ping_time": np.arange(2), "depth": np.arange(2)},
+            coords={"channel": ["chan1", "chan2"], "ping_time": np.arange(2), "depth": np.arange(2)},  # noqa: E501
             attrs={"long_name": "mask_with_channel"},
         ),
         xr.DataArray(
@@ -1186,7 +1187,7 @@ def test_apply_mask_NaN_elements():
         (True,
         xr.DataArray(
             np.array([np.identity(2), np.identity(2), np.ones_like(np.identity(2))]),
-            coords={"channel": ["chan1", "chan2", "chan3"], "ping_time": np.arange(2), "depth": np.arange(2)},
+            coords={"channel": ["chan1", "chan2", "chan3"], "ping_time": np.arange(2), "depth": np.arange(2)},  # noqa: E501
             attrs={"long_name": "mask_with_channel"},
         ),
         xr.DataArray(
@@ -1457,12 +1458,12 @@ def test_apply_mask_non_boolean_error():
         # Valid dimension orders - 3D cases with channel
         (xr.DataArray(np.ones((2, 5, 5)), 
                      dims=("channel", "ping_time", "range_sample"),
-                     coords={"channel": ["chan1", "chan2"], "ping_time": np.arange(5), "range_sample": np.arange(5)}),
+                     coords={"channel": ["chan1", "chan2"], "ping_time": np.arange(5), "range_sample": np.arange(5)}),  # noqa: E501
          {}, True, "3D_channel_first"),
         
         (xr.DataArray(np.ones((5, 2, 5)), 
                      dims=("ping_time", "channel", "range_sample"),
-                     coords={"channel": ["chan1", "chan2"], "ping_time": np.arange(5), "range_sample": np.arange(5)}),
+                     coords={"channel": ["chan1", "chan2"], "ping_time": np.arange(5), "range_sample": np.arange(5)}),  # noqa: E501
          {}, True, "3D_channel_middle"),
         
         # List of masks with different orders
@@ -1476,10 +1477,10 @@ def test_apply_mask_non_boolean_error():
         
         ([xr.DataArray(np.ones((1, 5, 5)), 
                       dims=("channel", "ping_time", "depth"),
-                      coords={"channel": ["chan1"], "ping_time": np.arange(5), "depth": np.arange(5)}),
+                      coords={"channel": ["chan1"], "ping_time": np.arange(5), "depth": np.arange(5)}),  # noqa: E501
           xr.DataArray(np.ones((5, 1, 5)), 
                       dims=("ping_time", "channel", "depth"),
-                      coords={"channel": ["chan1"], "ping_time": np.arange(5), "depth": np.arange(5)})],
+                      coords={"channel": ["chan1"], "ping_time": np.arange(5), "depth": np.arange(5)})],  # noqa: E501
          {}, True, "list_different_3D_orders"),
         
     ],
@@ -1492,7 +1493,7 @@ def test_apply_mask_non_boolean_error():
         "list_different_3D_orders",
     ],
 )
-def test_validate_and_collect_mask_input_comprehensive(mask_input, storage_options, should_pass, test_description):
+def test_validate_and_collect_mask_input_comprehensive(mask_input, storage_options, should_pass, test_description):  # noqa: E501
     """
     Comprehensive test for _validate_and_collect_mask_input that covers:
     - Order-independent dimension validation
@@ -1576,7 +1577,7 @@ def test_validate_and_collect_mask_input_comprehensive(mask_input, storage_optio
         "single_channel",
     ],
 )
-def test_apply_mask_actual_range_comprehensive(mask_type, test_values, expected_min, expected_max, test_description):
+def test_apply_mask_actual_range_comprehensive(mask_type, test_values, expected_min, expected_max, test_description):  # noqa: E501
     """
     Comprehensive test for actual_range attribute calculation in masked datasets.
     Tests various masking scenarios, value ranges, precision, and edge cases.
@@ -1655,7 +1656,6 @@ def test_apply_mask_actual_range_comprehensive(mask_type, test_values, expected_
                 f"actual_range min doesn't match data min for {test_description}"
             assert actual_range[1] == actual_max_from_data, \
                 f"actual_range max doesn't match data max for {test_description}"
-                
 
 ### add test for seafloor
 
@@ -1790,27 +1790,38 @@ def test_blackwell_vs_basic_close_local(ek80_path):
         pytest.fail(f"Missing EK80 RAW: {raw_path}")
 
     ed = ep.open_raw(raw_path, sonar_model="EK80")
-    ds_Sv = ep.calibrate.compute_Sv(ed, waveform_mode="CW", encode_mode="power")
-    ds_Sv = ep.consolidate.add_depth(ds_Sv, ed, depth_offset=9.8)
+
+    ds_Sv = ep.calibrate.compute_Sv(
+        ed,
+        waveform_mode="CW",
+        encode_mode="power",
+    )
+
+    ds_Sv = ep.consolidate.add_depth(
+        ds_Sv,
+        ed,
+        depth_offset=9.8,
+    )
+
+    # Add split-beam angles required by Blackwell
+    ds_Sv = ep.consolidate.add_splitbeam_angle(
+        ds_Sv,
+        ed,
+        waveform_mode="CW",
+        encode_mode="power",
+        to_disk=False,
+    )
 
     # Pick an available channel
     sel_channel = "WBT 400142-15 ES70-7C_ES"
 
-    # attach angles (required by Blackwell)
-    angle_along = ed["Sonar/Beam_group1"]["angle_alongship"]
-    angle_athwart = ed["Sonar/Beam_group1"]["angle_athwartship"]
-    ds_Sv = ds_Sv.assign(
-        angle_alongship=angle_along,
-        angle_athwartship=angle_athwart,
-    )
-    
     blackwell_depth = detect_seafloor(
         ds=ds_Sv,
         method="blackwell",
         params={
-            "var_name": "Sv",
             "channel": sel_channel,
-            "threshold": [-40, 702, 282],
+            "var_name": "Sv",
+            "threshold": [-40, 2.4, 1.0],
             "offset": 0.3,
             "r0": 10,
             "r1": 1000,
@@ -1820,11 +1831,11 @@ def test_blackwell_vs_basic_close_local(ek80_path):
     )
 
     basic_depth = detect_seafloor(
-        ds_Sv,
+        ds=ds_Sv,
         method="basic",
         params={
-            "var_name": "Sv",
             "channel": sel_channel,
+            "var_name": "Sv",
             "threshold": (-40, -20),
             "offset_m": 0.3,
             "bin_skip_from_surface": 200,
@@ -1833,13 +1844,21 @@ def test_blackwell_vs_basic_close_local(ek80_path):
 
     assert isinstance(blackwell_depth, xr.DataArray)
     assert blackwell_depth.dims == ("ping_time",)
+
+    assert isinstance(basic_depth, xr.DataArray)
     assert basic_depth.dims == ("ping_time",)
-    assert np.array_equal(blackwell_depth["ping_time"], basic_depth["ping_time"])
+
+    assert np.array_equal(
+        blackwell_depth["ping_time"],
+        basic_depth["ping_time"],
+    )
 
     b = blackwell_depth.values
     c = basic_depth.values
+
     m = np.isfinite(b) & np.isfinite(c)
     assert m.any(), "No overlapping finite detections to compare."
+
     mad = np.median(np.abs(b[m] - c[m]))
     assert mad < 5.0, f"Median abs diff too large: {mad:.2f} m"
 
@@ -1886,7 +1905,7 @@ def test_weill_basic_gaps_and_sizes():
     ds["Sv_corrected"].loc[dict(channel="59006-125-2", ping_time=[0,1,3,4], range_sample=7)] = -55.0
 
     # 2x2 at top-left corner, far from both features
-    ds["Sv_corrected"].loc[dict(channel="59006-125-2", ping_time=[14,15], range_sample=[0,1])] = -57.0
+    ds["Sv_corrected"].loc[dict(channel="59006-125-2", ping_time=[14,15], range_sample=[0,1])] = -57.0  # noqa: E501
 
     # detect
     mask = detect_shoal(
@@ -1985,7 +2004,7 @@ def test_echoview_mincan_no_linking():
     # Small 2x2
     ds["Sv_corrected"].loc[dict(channel="59006-125-2", ping_time=[1,2], range_sample=[1,2])] = -60.0
     # Large 3x3 moved to range 4..6 (gap at range=3)
-    ds["Sv_corrected"].loc[dict(channel="59006-125-2", ping_time=[2,3,4], range_sample=[4,5,6])] = -60.0
+    ds["Sv_corrected"].loc[dict(channel="59006-125-2", ping_time=[2,3,4], range_sample=[4,5,6])] = -60.0  # noqa: E501
 
     mask = detect_shoal(
         ds,

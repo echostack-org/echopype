@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 
 from echopype.metrics.summary_statistics import (
-    delta_z,
-    convert_to_linear,
+    delta_z,  # noqa: F401
+    convert_to_linear,  # noqa: F401
     abundance,
     center_of_mass,
     dispersion,
@@ -22,7 +22,7 @@ pytestmark = pytest.mark.unit
 def create_test_ds(Sv, echo_range):
     freq = [30]
     time = pd.date_range("2021-08-28", periods=2)
-    reference_time = pd.Timestamp("2021-08-27")
+    reference_time = pd.Timestamp("2021-08-27")  # noqa: F841
     r_b = [0, 1, 2]
 
     testDS = xr.Dataset(

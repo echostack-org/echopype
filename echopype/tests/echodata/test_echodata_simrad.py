@@ -2,7 +2,7 @@
 Tests functions contained within echodata/simrad.py
 """
 import pytest
-from echopype.echodata.simrad import retrieve_correct_beam_group, check_input_args_combination
+from echopype.echodata.simrad import retrieve_correct_beam_group, check_input_args_combination  # noqa: F401
 
 pytestmark = pytest.mark.unit
 
@@ -13,7 +13,7 @@ pytestmark = pytest.mark.unit
         pytest.param("CW", "comp_power", None,
                      marks=pytest.mark.xfail(strict=True,
                                              reason='This test should fail since comp_power '
-                                                    'is not an acceptable choice for encode_mode.')),
+                                                    'is not an acceptable choice for encode_mode.')),  # noqa: E501
         pytest.param("CB", None, None,
                      marks=pytest.mark.xfail(strict=True,
                                              reason='This test should fail since CB is not an '

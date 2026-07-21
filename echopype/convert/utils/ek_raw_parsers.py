@@ -502,7 +502,7 @@ class SimradMRUParser(_SimradDatagramParser):
         pitch:        float
         heading:      float
 
-    Version 1 contains (from https://www3.mbari.org/products/mbsystem/formatdoc/KongsbergKmall/EMdgmFormat_RevH/html/kmBinary.html): # noqa
+    Version 1 contains (from https://www3.mbari.org/products/mbsystem/formatdoc/KongsbergKmall/EMdgmFormat_RevH/html/kmBinary.html):
 
     Status word See 1)  uint32  4U
     Latitude    deg double  8F
@@ -540,7 +540,7 @@ class SimradMRUParser(_SimradDatagramParser):
 
         to_string():        Returns the datagram as a raw string (including
                             leading/trailing size fields) ready for writing to disk
-    """
+    """  # noqa: E501
 
     def __init__(self):
         headers = {

@@ -2,8 +2,8 @@ import pytest
 
 import numpy as np
 import pandas as pd
-from flox.xarray import xarray_reduce
-import xarray as xr
+from flox.xarray import xarray_reduce  # noqa: F401
+import xarray as xr  # noqa: F401
 import echopype as ep
 from echopype.consolidate import add_location, add_depth
 from echopype.commongrid.utils import (
@@ -270,7 +270,7 @@ def test_compute_MVBS_w_dim_swapped(request):
 
     # Test to see if ping_time was resampled correctly
     expected_ping_time = (
-        ds_Sv["ping_time"].resample(ping_time=ping_time_bin, skipna=True).asfreq().indexes["ping_time"]
+        ds_Sv["ping_time"].resample(ping_time=ping_time_bin, skipna=True).asfreq().indexes["ping_time"]  # noqa: E501
     )
     assert np.array_equal(ds_MVBS.ping_time.data, expected_ping_time.values)
 
@@ -515,7 +515,7 @@ def test_compute_MVBS_NASC_skipna_nan_and_non_nan_values(
                 "```Sv``` values that have corresponding NaN coordinate values. Consider handling "
                 "these values before calling your intended commongrid function."
             )
-            expected_warning = f"The ```echo_range``` coordinate array contain NaNs. {aggregation_msg}"
+            expected_warning = f"The ```echo_range``` coordinate array contain NaNs. {aggregation_msg}"  # noqa: E501
             assert any(expected_warning in record.message for record in caplog.records)
 
             # Turn off logger verbosity
@@ -560,7 +560,7 @@ def test_compute_MVBS_NASC_skipna_nan_and_non_nan_values(
 def test_assign_actual_range(request):
     """
     Tests assign_actual_range function to see if the attribute is properly assigned to the MVBS dataset.
-    """
+    """  # noqa: E501
     # Grab mock Sv dataset
     ds_Sv = request.getfixturevalue("mock_Sv_dataset_regular")
 
@@ -603,5 +603,5 @@ def test_compute_reindex_non_NaN_not_map_reduce(request):
     # Compute MVBS with invalid parameters
     for method in ["blockwise", "cohorts"]:
         for reindex in [True, False]:
-            with pytest.raises(ValueError, match=f"Passing in reindex={reindex} is only allowed when method='map_reduce'."):
+            with pytest.raises(ValueError, match=f"Passing in reindex={reindex} is only allowed when method='map_reduce'."):  # noqa: E501
                 ep.commongrid.compute_MVBS(ds_Sv, method=method, reindex=reindex)

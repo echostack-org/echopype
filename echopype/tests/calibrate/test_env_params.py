@@ -136,7 +136,7 @@ def test_harmonize_env_param_time_only_one_non_NaN_along_time1():
     # Check that output da has only 1 value and no dimension
     output_da = harmonize_env_param_time(da, None)
     assert output_da == 1, "Output data array should just be 1"
-    assert 'time1' not in output_da.dims, "```harmonize_env_param_time``` should have dropped 'time1' dimension"
+    assert 'time1' not in output_da.dims, "```harmonize_env_param_time``` should have dropped 'time1' dimension"  # noqa: E501
 
 
 @pytest.mark.unit
@@ -144,7 +144,7 @@ def test_harmonize_env_param_time_only_one_non_NaN_along_time1():
     ("user_dict", "channel", "out_dict"),
     [
         # dict all scalars, channel a list, output should be all scalars
-        #   - this behavior departs from sanitize_user_cal_dict, which will make scalars into xr.DataArray
+        #   - this behavior departs from sanitize_user_cal_dict, which will make scalars into xr.DataArray  # noqa: E501
         (
             {"temperature": 10, "salinity": 20},
             ["chA", "chB"],
@@ -175,7 +175,7 @@ def test_harmonize_env_param_time_only_one_non_NaN_along_time1():
             None,
             marks=pytest.mark.xfail(
                 strict=True,
-                reason="channel coordinate in param xr.DataArray mismatches that in the channel list",
+                reason="channel coordinate in param xr.DataArray mismatches that in the channel list",  # noqa: E501
             ),
         ),
         # dict has xr.DataArray, channel a xr.DataArray
@@ -297,7 +297,7 @@ def test_get_env_params_AZFP(azfp_path, env_ext, out_dict):
             "Mackenzie",
             "FG",
         ),
-        # T, S, P, pH all exist, will calculate; has absorption formula passed in, check using the correct formula
+        # T, S, P, pH all exist, will calculate; has absorption formula passed in, check using the correct formula  # noqa: E501
         (
             {
                 "temperature": 10,

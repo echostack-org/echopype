@@ -66,33 +66,20 @@ We also acknowledge software engineering support from
 the University of Washington Scientific Software Engineering Center (SSEC),
 as part of the Schmidt Futures Virtual Institute for Scientific Software (VISS) in 2023.
 
-<table align="center" border="0" cellpadding="12" cellspacing="0" style="border-collapse: collapse;">
-  <tr>
-    <td align="center" style="border: 0;">
-      <a href="https://oceanexplorer.noaa.gov/news/oer-updates/2021/fy21-ffo-schedule.html" style="text-decoration:none;">
-        <img src="assets/logos/noaa.png" alt="NOAA" width="120">
-      </a>
-    </td>
-
-    <td align="center" style="border: 0;">
-      <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1849930&HistoricalAwards=false" style="text-decoration:none;">
-        <img src="assets/logos/nsf.png" alt="NSF" width="120">
-      </a>
-    </td>
-
-    <td align="center" style="border: 0;">
-      <a href="https://escience.washington.edu/software-engineering/ssec/" style="text-decoration:none;">
-        <img src="assets/logos/ssec.png" alt="SSEC" width="120">
-      </a>
-    </td>
-
-    <td align="center" style="border: 0;">
-      <a href="https://voiceoftheocean.org/" style="text-decoration:none;">
-        <img src="assets/logos/voto.png" alt="VOTO Foundation" width="120">
-      </a>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://oceanexplorer.noaa.gov/news/oer-updates/2021/fy21-ffo-schedule.html">
+    <img src="_static/logos/noaa.png" alt="NOAA" width="120">
+  </a>
+  <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1849930&HistoricalAwards=false">
+    <img src="_static/logos/nsf.png" alt="NSF" width="120">
+  </a>
+  <a href="https://escience.washington.edu/software-engineering/ssec/">
+    <img src="_static/logos/ssec.png" alt="SSEC" width="120">
+  </a>
+  <a href="https://voiceoftheocean.org/">
+    <img src="_static/logos/voto.png" alt="VOTO Foundation" width="120">
+  </a>
+</p>
 
 
 ## Citing echopype
