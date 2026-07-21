@@ -332,7 +332,8 @@ def add_location(
             )
         elif len(sentence_types) == 1:
             extra_msg = (
-                f" Duplicate timestamps found within NMEA sentence type {sentence_types[0]}."
+                f"Duplicate timestamps found within NMEA sentence type {sentence_types[0]}. "
+                "Only the first entry with the same timestamp will be used for interpolation."
             )
 
     # Select NMEA subset (if applicable) and interpolate location variables and place
