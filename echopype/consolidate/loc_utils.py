@@ -113,8 +113,7 @@ def check_and_drop_loc_time_dim_duplicates(
     time_dim_name: str,
     extra_msg: str = "",
 ) -> xr.DataArray:
-    """Check for and drop duplicates in time_dim_name.
-    """
+    """Check for and drop duplicates in time_dim_name."""
     time_vals = da[time_dim_name].data
     if len(np.unique(time_vals)) != len(time_vals):
         n_total = len(time_vals)

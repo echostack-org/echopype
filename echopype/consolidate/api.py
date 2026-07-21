@@ -277,15 +277,12 @@ def add_location(
     Returns
     -------
     The input dataset with the location data added
-   Returns
-   -------
-   The input dataset with location data added
 
-   Notes
-   ------
-   If duplicated time values are found in the latitude/longitude data, only the first entry is kept 
-   for the interpolation operation, and a warning is issued.
-   """
+    Notes
+    -----
+    If duplicated time values are found in the latitude/longitude data, only the first entry is kept
+    for the interpolation operation, and a warning is issued.
+    """
     # Open dataset and echodata object
     ds = open_source(ds, "dataset", {})
     echodata = open_source(echodata, "echodata", {})
