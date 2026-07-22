@@ -485,8 +485,9 @@ def resample_to_geometry(
 
     if exist_reversed_time(ds_Sv, "ping_time"):
         warnings.warn(
-            "Reversed ping_time values detected. The dataset has been reordered "
-            "to increasing ping_time before resampling.",
+            "Reversed ping_time values detected. The ping_time variable "
+            "has been modified to increase monotonically before resampling. "
+            "See echopype.qc.coerce_increasing_time() for detail.",
             UserWarning,
         )
         coerce_increasing_time(ds_Sv)
