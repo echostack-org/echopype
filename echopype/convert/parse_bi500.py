@@ -46,7 +46,16 @@ PV_FIELDS = (
 class ParseBI500(ParseBase):
     """Class for converting data from Bergen Integrator (BI500) software."""
 
-    def __init__(self, file, file_meta, storage_options={}, sonar_model="BI500"):
+    def __init__(
+        self,
+        file,
+        storage_options={},
+        sonar_model="BI500",
+        file_meta=None,
+        bot_file="",
+        idx_file="",
+        **kwargs,
+    ):
         super().__init__(file, storage_options, sonar_model)
 
         self.timestamp_pattern = FILENAME_DATETIME_BI500
@@ -185,6 +194,7 @@ class ParseBI500(ParseBase):
         trace_vars = ("TargetDepth", "CompTS", "UncompTS", "Alongship", "Athwartship")
         self.load_BI500_info()
         self.load_BI500_ping()
+        self.load_BI500_vlog()
         bi500_data = self.fsmap.fs.open(self.file_type_map["-Data"], mode="rb")
 
         # Unpack the BI500 Data file
@@ -200,10 +210,10 @@ class ParseBI500(ParseBase):
                 BOTTOM_FORMAT = "h" * BOTTOM_COUNT
                 TRACE_FORMAT = "fffff" * TRACE_COUNT
                 PING_FORMAT = PELAGIC_FORMAT + BOTTOM_FORMAT + TRACE_FORMAT
-                unpacked_data = unpack(PING_FORMAT, loaded_data)
+                unpacked_data = np.asarray(unpack(PING_FORMAT, loaded_data), dtype=np.float64)
 
-                # Convert unpacked data to dB units.
-                unpacked_data = 10 * np.log10(2) / 256
+                # Convert pelagic/bottom power samples to dB units.
+                unpacked_data[: PELAGIC_COUNT + BOTTOM_COUNT] *= 10 * np.log10(2) / 256
                 self.unpacked_data["pelagic"].append(unpacked_data[:PELAGIC_COUNT])
                 self.unpacked_data["bottom"].append(
                     unpacked_data[PELAGIC_COUNT : PELAGIC_COUNT + BOTTOM_COUNT]
