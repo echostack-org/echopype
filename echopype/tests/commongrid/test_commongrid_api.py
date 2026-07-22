@@ -362,14 +362,35 @@ def test_compute_MVBS(test_data_samples):
             range_kwargs.pop("azfp_cal_type")
     Sv = ep.calibrate.compute_Sv(ed, **range_kwargs)
     ping_time_bin = "20s"
-    ds_MVBS = ep.commongrid.compute_MVBS(Sv, ping_time_bin=ping_time_bin)
+
+    ds_MVBS = ep.commongrid.compute_MVBS(
+        Sv,
+        ping_time_bin=ping_time_bin,
+    )
+
     assert ds_MVBS is not None
+
+    expected_freq = Sv["frequency_nominal"].sel(
+        channel=ds_MVBS["channel"]
+    )
+
+    assert np.array_equal(
+        ds_MVBS["frequency_nominal"].values,
+        expected_freq.values,
+    )
 
     # Test to see if ping_time was resampled correctly
     expected_ping_time = (
-        Sv["ping_time"].resample(ping_time=ping_time_bin, skipna=True).asfreq().indexes["ping_time"]
+        Sv["ping_time"]
+        .resample(ping_time=ping_time_bin, skipna=True)
+        .asfreq()
+        .indexes["ping_time"]
     )
-    assert np.array_equal(ds_MVBS.ping_time.data, expected_ping_time.values)
+
+    assert np.array_equal(
+        ds_MVBS.ping_time.data,
+        expected_ping_time.values,
+    )
 
 
 @pytest.mark.integration
