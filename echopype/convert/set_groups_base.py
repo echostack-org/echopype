@@ -11,7 +11,7 @@ from ..echodata.convention import sonarnetcdf_1
 from ..utils.coding import COMPRESSION_SETTINGS, DEFAULT_TIME_ENCODING, set_time_encodings
 from ..utils.prov import echopype_prov_attrs, source_files_vars
 
-NMEA_SENTENCE_DEFAULT = ["GGA", "GLL", "RMC"]
+NMEA_SENTENCE_LOCATION = ["GGA", "GLL", "RMC"]
 NMEA_SENTENCE_SPEED = ["RMC", "VTG"]
 NMEA_SENTENCE_HEADING = ["HDT"]
 
@@ -237,7 +237,7 @@ class SetGroupsBase(abc.ABC):
     # TODO: move this to be part of parser as it is not a "set" operation
     def _extract_NMEA_latlon(self):
         """Get the lat and lon values from the raw nmea data"""
-        nmea_msg, time, msg_type = self._extract_selected_NMEA(NMEA_SENTENCE_DEFAULT)
+        nmea_msg, time, msg_type = self._extract_selected_NMEA(NMEA_SENTENCE_LOCATION)
         if nmea_msg:
             lat, lon = [], []
             for x in nmea_msg:
