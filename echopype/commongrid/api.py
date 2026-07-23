@@ -476,6 +476,9 @@ def resample_to_geometry(
         `range_sample`, and `echo_range` as the target.
         `ping_time` is assumed identical across all input channels
         and preserved throughout the resampling process.
+        The resulting target geometry, whether specified using
+        `target_channel`` or `target_grid`, can be retrieved with
+        `target_grid = regridded_ds["echo_range"]`.
     """
 
     if target_variable not in ds_Sv:
