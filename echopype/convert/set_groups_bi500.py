@@ -272,7 +272,7 @@ class SetGroupsBI500(SetGroupsBase):
         channel_id = self._get_channel_id()
         frequency = float(parameters["frequency"][0])
 
-        pelagic = self._stack_sagimples(unpacked_data["pelagic"])
+        pelagic = self._stack_samples(unpacked_data["pelagic"])
         bottom = self._stack_samples(unpacked_data["bottom"])
 
         ds = xr.Dataset(
