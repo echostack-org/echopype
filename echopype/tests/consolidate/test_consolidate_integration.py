@@ -289,6 +289,115 @@ def test_add_splitbeam_angle(sonar_model, test_path_key, raw_file_name, test_pat
         temp_dir.cleanup()
 
 
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("sonar_model", "test_path_key", "raw_file_name", "paths_to_echoview_mat"),
+    [
+        # ek60_CW_power
+        (
+            "EK60", "EK60", "DY1801_EK60-D20180211-T164025.raw",
+            [
+                'splitbeam/DY1801_EK60-D20180211-T164025_angles_T1.mat',
+                'splitbeam/DY1801_EK60-D20180211-T164025_angles_T2.mat',
+                'splitbeam/DY1801_EK60-D20180211-T164025_angles_T3.mat',
+                'splitbeam/DY1801_EK60-D20180211-T164025_angles_T4.mat',
+                'splitbeam/DY1801_EK60-D20180211-T164025_angles_T5.mat'
+            ],
+        ),
+        # ek80_CW_power
+        (
+            "EK80", "EK80", "Summer2018--D20180905-T033113.raw",
+            [
+                'splitbeam/Summer2018--D20180905-T033113_angles_T2.mat',
+                'splitbeam/Summer2018--D20180905-T033113_angles_T1.mat',
+            ],
+        ),
+    ],
+    ids=[
+        "ek60_CW_power",
+        "ek80_CW_power",
+    ],
+)
+def test_add_splitbeam_angle_with_dim_swap(sonar_model, test_path_key, raw_file_name, test_path, paths_to_echoview_mat):
+    """
+    Test adding split-beam angle to Sv dataset after swapping dimension/coordinate
+    from channel to frequency_nominal.
+    Asserts that the output dataset has swapped channel dim to frequency_nominal
+    and contains the split-beam angle variables.
+    """
+
+    ed = ep.open_raw(test_path[test_path_key] / raw_file_name, sonar_model=sonar_model)
+
+    waveform_mode = "CW"
+    encode_mode = "power"
+
+    ds_Sv = ep.calibrate.compute_Sv(ed, waveform_mode=waveform_mode, encode_mode=encode_mode)
+
+    ds_Sv = ep.consolidate.swap_dims_channel_frequency(ds_Sv)
+
+    # swap dims in beam_groups to test with dim_0 = frequency_nominal
+    ed["Sonar/Beam_group1"] = ep.consolidate.swap_dims_channel_frequency(ed["Sonar/Beam_group1"])
+    if ed["Sonar"].sizes["beam_group"] > 1:
+        ed["Sonar/Beam_group2"] = ep.consolidate.swap_dims_channel_frequency(ed["Sonar/Beam_group2"])
+
+    ds_Sv = ep.consolidate.add_splitbeam_angle(source_Sv=ds_Sv, echodata=ed,
+                                               waveform_mode=waveform_mode,
+                                               encode_mode=encode_mode,
+                                               to_disk=False)
+
+    # Check that channel dim has been swapped to frequency_nominal
+    assert "channel" not in ds_Sv.sizes
+    assert "frequency_nominal" in ds_Sv.sizes
+    # Check that split-beam angles were added to the dataset
+    assert "angle_alongship" in ds_Sv.data_vars
+    assert "angle_athwartship" in ds_Sv.data_vars
+
+
+@pytest.mark.integration
+def test_all_consolidate_functions_missing_channel_and_frequency_nominal_raises_error(test_path):
+    """Test that add_splitbeam_angle raises when neither frequency_nominal nor channel exists."""
+
+    ed = ep.open_raw(
+        test_path["EK80"] / "Summer2018--D20180905-T033113.raw",
+        sonar_model="EK80",
+    )
+
+    waveform_mode = "CW"
+    encode_mode = "power"
+
+    ds_Sv = ep.calibrate.compute_Sv(
+        ed,
+        waveform_mode=waveform_mode,
+        encode_mode=encode_mode,
+    )
+
+    # Remove both possible dimension coordinates
+    ds_Sv = ds_Sv.drop_vars(["frequency_nominal", "channel"])
+
+    # Test that the same errors are raised for missing valid `dim_0` for all consolidate functions
+    with pytest.raises(
+        ValueError,
+        match="The first dimension of the dataset must",
+    ):
+        ep.consolidate.add_splitbeam_angle(
+            source_Sv=ds_Sv,
+            echodata=ed,
+            waveform_mode=waveform_mode,
+            encode_mode=encode_mode,
+            to_disk=False,
+        )
+    with pytest.raises(
+        ValueError,
+        match="The first dimension of the dataset must",
+    ):
+        ep.consolidate.add_location(ds_Sv, ed)
+    with pytest.raises(
+        ValueError,
+        match="The first dimension of the dataset must",
+    ):
+        ep.consolidate.add_depth(ds_Sv, ed)
+
+
 def test_add_splitbeam_angle_BB_pc(test_path):
 
     # obtain the EchoData object with the data needed for the calculation

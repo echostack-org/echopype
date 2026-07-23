@@ -21,7 +21,11 @@ from .ek_depth_utils import (
     ek_use_platform_vertical_offsets,
 )
 from .loc_utils import check_and_drop_loc_time_dim_duplicates, check_loc_vars_validity, sel_nmea
-from .split_beam_angle import get_angle_complex_samples, get_angle_power_samples
+from .split_beam_angle import (
+    get_angle_complex_samples,
+    get_angle_power_samples,
+    get_dim_0,
+)
 
 logger = _init_logger(__name__)
 
@@ -118,6 +122,9 @@ def add_depth(
     # Open Sv dataset
     ds = open_source(ds, "dataset", {})
 
+    # Check that `channel` or `frequency_nominal` is a dimension in the dataset
+    _ = get_dim_0(ds)  # return nothing since it's not used
+
     # Raise `ValueError` if `echodata` is needed but not passed in
     if (not echodata) and (use_platform_vertical_offsets or use_platform_angles or use_beam_angles):
         raise ValueError(
@@ -205,8 +212,9 @@ def add_depth(
             # Compute echo range scaling in EK systems using platform angle data
             echo_range_scaling = ek_use_platform_angles(echodata["Platform"], ds["ping_time"])
         elif use_beam_angles:
-            # Identify beam group name by checking channel values of `ds`
-            if echodata["Sonar/Beam_group1"]["channel"].equals(ds["channel"]):
+            dim_0 = get_dim_0(ds)
+            # Identify beam group name by checking `dim_0` values of `ds`
+            if echodata["Sonar/Beam_group1"][dim_0].equals(ds[dim_0]):
                 beam_group_name = "Beam_group1"
             else:
                 beam_group_name = "Beam_group2"
@@ -286,6 +294,9 @@ def add_location(
     # Open dataset and echodata object
     ds = open_source(ds, "dataset", {})
     echodata = open_source(echodata, "echodata", {})
+
+    # Check that `channel` or `frequency_nominal` is a dimension in the dataset
+    _ = get_dim_0(ds)  # return nothing since it's not used
 
     # Grab lat lon names
     if echodata.sonar_model.startswith("EK") and datagram_type in ["MRU1", "IDX"]:
@@ -475,6 +486,9 @@ def add_splitbeam_angle(
     source_Sv = open_source(source_Sv, "dataset", storage_options)
     echodata = open_source(echodata, "echodata", storage_options)
 
+    # Check that `channel` or `frequency_nominal` is a dimension in the dataset
+    dim_0 = get_dim_0(source_Sv)
+
     # ensure that echodata was produced by EK60 or EK80-like sensors
     if echodata.sonar_model not in ["EK60", "ES70", "EK80", "ES80", "EA640"]:
         raise ValueError(
@@ -490,12 +504,8 @@ def add_splitbeam_angle(
     # and obtain the echodata group path corresponding to encode_mode
     ed_beam_group = retrieve_correct_beam_group(echodata, waveform_mode, encode_mode)
 
-    # check that source_Sv at least has a channel dimension
-    if "channel" not in source_Sv.variables:
-        raise ValueError("The input source_Sv Dataset must have a channel dimension!")
-
-    # Select ds_beam channels from source_Sv
-    ds_beam = echodata[ed_beam_group].sel(channel=source_Sv["channel"].values)
+    # Select beam group based on dim_0
+    ds_beam = echodata[ed_beam_group].sel({dim_0: source_Sv[dim_0].values})
 
     # Assemble angle param dict
     angle_param_list = [
@@ -512,10 +522,9 @@ def add_splitbeam_angle(
             raise ValueError(f"source_Sv does not contain the necessary parameter {p_name}!")
 
     # fail if source_Sv and ds_beam do not have the same lengths
-    # for ping_time, range_sample, and channel
+    # for dim_0, ping_time, range_sample
     same_size_lens = [
-        ds_beam.sizes[dim] == source_Sv.sizes[dim]
-        for dim in ["channel", "ping_time", "range_sample"]
+        ds_beam.sizes[dim] == source_Sv.sizes[dim] for dim in [dim_0, "ping_time", "range_sample"]
     ]
     if not same_size_lens:
         raise ValueError(
@@ -535,17 +544,17 @@ def add_splitbeam_angle(
         if pulse_compression:  # with pulse compression
             # put receiver fs into the same dict for simplicity
             pc_params = get_filter_coeff(
-                echodata["Vendor_specific"].sel(channel=source_Sv["channel"].values)
+                echodata["Vendor_specific"].sel({dim_0: source_Sv[dim_0].values})
             )
             pc_params["receiver_sampling_frequency"] = source_Sv["receiver_sampling_frequency"]
 
             # Add dictionary entry to keep/drop last hanning window's zero value
             pc_params["drop_last_hanning_zero"] = drop_last_hanning_zero
 
-            theta, phi = get_angle_complex_samples(ds_beam, angle_params, pc_params)
+            theta, phi = get_angle_complex_samples(ds_beam, angle_params, pc_params, dim_0=dim_0)
         else:  # without pulse compression
             # operation is identical with CW complex data
-            theta, phi = get_angle_complex_samples(ds_beam, angle_params)
+            theta, phi = get_angle_complex_samples(ds_beam, angle_params, dim_0=dim_0)
 
     # add theta and phi to source_Sv input
     theta.attrs["long_name"] = "split-beam alongship angle"
