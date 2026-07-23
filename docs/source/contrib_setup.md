@@ -18,7 +18,7 @@ To create an environment for developing Echopype, we recommend the following ste
 
 1. Fork the Echopype repository, clone your fork to your machine, then in `git remote` set your fork as the `origin` and the echostack-org repository as `upstream`:
 
-    ```shell  
+    ```shell
     # Clone your fork
     git clone https://github.com/YOUR_GITHUB_USERNAME/echopype.git
 
