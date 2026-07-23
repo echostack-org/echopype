@@ -203,6 +203,7 @@ def test_path():
         "LEGACY_DATATREE": TEST_DATA_FOLDER / "legacy_datatree",
         "RESAMPLE_GEOMETRY": TEST_DATA_FOLDER / "resample_to_geometry_example_data",
         "TS_SPECTRUM_EXAMPLE": TEST_DATA_FOLDER / "ts_spectrum_example_data",
+        "BI500": Path(__file__).resolve().parent.parent / "test_data" / "bi500",
     }
 
 

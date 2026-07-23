@@ -7,6 +7,7 @@ from xarray import DataTree
 # fmt: off
 # black and isort have conflicting ideas about how this should be formatted
 from ..core import SONAR_MODELS
+from .set_groups_bi500 import SetGroupsBI500
 
 if TYPE_CHECKING:
     from ..core import EngineHint, PathHint, SonarModelsHint
@@ -499,6 +500,12 @@ def open_raw(
             sonar_model=sonar_model,
             date_created=parser.config_datagram["timestamp"],
         )
+    elif sonar_model == "BI500":
+        date_created = SetGroupsBI500._build_ping_time(
+            [parser.parameters["start_date"][0]],
+            [parser.parameters["start_time"][0]],
+        )[0]
+        tree_dict["/"] = setgrouper.set_toplevel(sonar_model=sonar_model, date_created=date_created)
     else:
         tree_dict["/"] = setgrouper.set_toplevel(
             sonar_model=sonar_model, date_created=parser.ping_time[0]
