@@ -441,8 +441,8 @@ def resample_to_geometry(
     target_grid: xr.DataArray | None = None,
 ):
     """
-    Regrids a variable across all channels in the EchoData object to match the geometry
-    along range of the specified target channel.
+    Regrids a variable across all channels in the EchoData object to
+    a common range geometry specified by either a target channel or a custom target grid.
     Ping time is assumed identical for all input channels.
 
     Parameters
@@ -463,8 +463,11 @@ def resample_to_geometry(
         Channel used as reference grid. Must be provided if target_grid is None.
 
     target_grid : xr.DataArray, optional
-        Custom grid. Must be provided if target_channel is None.
-        Data array must have dimension ('ping_time', 'range_sample').
+        Custom range grid. Must be provided if ``target_channel`` is None.
+        The grid may have dimension ``("range_sample",)`` for a common
+        grid across all pings, or ``("ping_time", "range_sample")`` for
+        a ping-dependent grid. Its ``range_sample`` length may differ
+        from that of the input dataset.
 
     Returns
     -------
@@ -517,16 +520,31 @@ def resample_to_geometry(
     if target_channel and target_channel not in channels:
         raise ValueError(f"{target_channel} is not part of the channel names in : {channels}")
 
-    if target_grid is not None and target_grid.dims != ("ping_time", "range_sample"):
-        raise ValueError("target_grid dimensions do not match expected dimensions.")
+    valid_target_grid_dims = {
+        ("range_sample",),
+        ("ping_time", "range_sample"),
+    }
+
+    if target_grid is not None and target_grid.dims not in valid_target_grid_dims:
+        raise ValueError(
+            "target_grid must have dimensions ('range_sample',) or "
+            "('ping_time', 'range_sample'). "
+            f"Found: {target_grid.dims}"
+        )
+
     da_var = ds_Sv[target_variable]
 
     if target_channel:
         ds_target = ds_Sv.sel(channel=target_channel).copy()
         target_range_da = ds_target["echo_range"]
-    # Target grid is given
-    else:
+    else:  # Target grid is given
         target_range_da = target_grid
+
+    # Use a distinct core dimension so the target grid may have a
+    # different length from the input range_sample dimension.
+    target_range_da = target_range_da.rename({"range_sample": "target_range_sample"})
+
+    target_range_size = target_range_da.sizes["target_range_sample"]
 
     # List to hold the aligned DataArrays
     aligned_arrays = []
@@ -541,18 +559,30 @@ def resample_to_geometry(
             source_linear = ds_source
         source_range_da = ds_Sv["echo_range"].sel(channel=channel)
 
-        # Apply weighted mean resapling as Ufunc
-
+        # Apply weighted mean resampling as ufunc
         result_linear = xr.apply_ufunc(
             _weighted_mean_kernel,
             target_range_da,
             source_range_da,
             source_linear,
-            input_core_dims=[["range_sample"], ["range_sample"], ["range_sample"]],
-            output_core_dims=[["range_sample"]],
+            input_core_dims=[
+                ["target_range_sample"],
+                ["range_sample"],
+                ["range_sample"],
+            ],
+            output_core_dims=[["target_range_sample"]],
             vectorize=True,
             dask="parallelized",
             output_dtypes=[np.float64],
+            dask_gufunc_kwargs={
+                "output_sizes": {
+                    "target_range_sample": target_range_size,
+                }
+            },
+        )
+
+        result_linear = result_linear.rename({"target_range_sample": "range_sample"}).assign_coords(
+            range_sample=np.arange(target_range_size)
         )
 
         # Convert back to log domain
@@ -568,7 +598,13 @@ def resample_to_geometry(
         aligned_arrays.append(resample_variable)
 
     ds_combined = xr.concat(aligned_arrays, dim="channel")
-    echo_range_aligned = target_range_da.broadcast_like(ds_combined)
+
+    target_range_output = target_range_da.rename(
+        {"target_range_sample": "range_sample"}
+    ).assign_coords(range_sample=np.arange(target_range_size))
+
+    echo_range_aligned = target_range_output.broadcast_like(ds_combined)
+    echo_range_aligned = echo_range_aligned.transpose(*ds_combined.dims)
 
     new_ds = xr.Dataset(
         data_vars={

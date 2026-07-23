@@ -1338,3 +1338,107 @@ def test_resample_shared_depth_and_range_geometry(test_path):
             atol=0,
             rtol=0,
         )
+        
+        
+@pytest.mark.integration
+def test_resample_with_one_dimensional_longer_target_grid(
+    ds_Sv_echo_range_regular,
+):
+    """
+    Test a one dimensional target grid longer than the input grid.
+
+    A one dimensional target grid must be applied to every ping and
+    channel, and its length must determine the output range_sample size.
+    """
+
+    ds = ds_Sv_echo_range_regular
+    input_size = ds.sizes["range_sample"]
+    target_size = input_size + 10
+
+    reference_range = (
+        ds["echo_range"]
+        .isel(channel=0, ping_time=0)
+        .dropna("range_sample")
+    )
+
+    spacing = float(
+        reference_range.diff("range_sample").median().values
+    )
+    range_start = float(reference_range.isel(range_sample=0).values)
+
+    target_grid = xr.DataArray(
+        range_start + np.arange(target_size) * spacing,
+        dims=("range_sample",),
+        coords={
+            "range_sample": np.arange(target_size),
+        },
+        name="echo_range",
+        attrs=ds["echo_range"].attrs,
+    )
+
+    ds_regridded = ep.commongrid.resample_to_geometry(
+        ds.chunk(
+            {
+                "channel": 1,
+                "ping_time": 1000,
+                "range_sample": -1,
+            }
+        ),
+        target_variable="Sv",
+        is_log=True,
+        target_grid=target_grid,
+    )
+
+    assert target_size > input_size
+    assert ds_regridded.sizes["range_sample"] == target_size
+
+    assert ds_regridded["Sv"].dims == (
+        "channel",
+        "ping_time",
+        "range_sample",
+    )
+    assert ds_regridded["echo_range"].dims == (
+        "channel",
+        "ping_time",
+        "range_sample",
+    )
+
+    expected_grid = target_grid.broadcast_like(
+        ds_regridded["Sv"]
+    ).transpose(*ds_regridded["Sv"].dims)
+
+    xr.testing.assert_allclose(
+        ds_regridded["echo_range"],
+        expected_grid,
+    )
+    
+@pytest.mark.unit
+def test_resample_warns_and_corrects_reversed_ping_time(
+    ds_Sv_echo_range_regular,
+):
+    """Test that reversed ping times are corrected with a warning."""
+
+    ds = ds_Sv_echo_range_regular.copy(deep=True)
+
+    ping_time = ds["ping_time"].values.copy()
+    reversal_idx = 50
+    ping_time[reversal_idx] = (
+        ping_time[reversal_idx - 1] - np.timedelta64(1, "us")
+    )
+    ds = ds.assign_coords(ping_time=ping_time)
+
+    target_channel = ds["channel"].values[0]
+
+    with pytest.warns(
+        UserWarning,
+        match="Reversed ping_time values detected",
+    ):
+        ds_regridded = ep.commongrid.resample_to_geometry(
+            ds,
+            target_channel=target_channel,
+        )
+
+    assert np.all(
+        np.diff(ds_regridded["ping_time"].values)
+        >= np.timedelta64(0, "ns")
+    )
