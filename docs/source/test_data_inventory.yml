@@ -1,0 +1,412 @@
+########## Template
+# bundle_name.zip:
+#   documented_checksum: null
+#   instrument: null
+#   description: null
+#   source: null
+#   contributor: null
+#   references: []
+#   notes: null
+#   files: {}
+
+ad2cp.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+azfp.zip:
+  documented_checksum: null
+  instrument: AZFP
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files:
+    17082117.01A:
+      instrument: AZFP
+      description: Standard test. Used with 17041823.XML.
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+azfp6.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ea640.zip:
+  documented_checksum: null
+  instrument: EA640
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files:
+    0001a-D20200321-T032026.raw:
+      instrument: EA640
+      description: Data of identical format to standard EK80 files, but with a different NME1 datagram (instead of NME0).
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+ecs.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek60.zip:
+  documented_checksum: null
+  instrument: EK60
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files:
+    DY1801_EK60-D20180211-T164025.raw:
+      instrument: EK60
+      description: Standard test with constant ranges across ping times
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    Winter2017-D20170115-T150122.raw:
+      instrument: EK60
+      description: Contains a change of recording length in the middle of the file
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    2015843-D20151023-T190636.raw:
+      instrument: EK60
+      description: Not used in tests but contains ranges are not constant across ping times
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    SH1701_consecutive_files_w_range_change:
+      instrument: EK60
+      description: Not used in tests.
+      source: null
+      contributor: null
+      references: []
+      notes: Folder on shared drive that contains sequential files with ranges that are not constant across ping times.
+
+    NBP_B050N-D20180118-T090228.raw:
+      instrument: EK60
+      description: split-beam setup without angle data
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+ek60_calibrate_chunks.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek60_missing_channel_power.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek80.zip:
+  documented_checksum: null
+  instrument: EK80
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files:
+    D20190822-T161221.raw:
+      instrument: EK80
+      description: Contains channels that only record real power data
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    D20170912-T234910.raw:
+      instrument: EK80
+      description: Contains channels that only record complex power data
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    Summer2018--D20180905-T033113.raw:
+      instrument: EK80
+      description: Contains BB channels encoded in complex and CW channels encoded in power samples (reduced from 300 MB to 3.8 MB in test data updates).
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    Summer2018:
+      instrument: EK80
+      description: Contains channels with complex power data as well as channels with real power data. They can be combined.
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    2019118 group2survey-D20191214-T081342.raw:
+      instrument: EK80
+      description: Contains 6 channels but only 2 of those channels collect ping data
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    D20200528-T125932.raw:
+      instrument: EK80
+      description: Data collected from WBT mini (instead of WBT), from @emlynjdavies
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    Green2.Survey2.FM.short.slow.-D20191004-T211557.raw:
+      instrument: EK80
+      description: Contains 2-in-1 transducer, from @FletcherFT (reduced from 104.9 MB to 765 KB in test data updates)
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    raw4-D20220514-T172704.raw:
+      instrument: EK80
+      description: Contains RAW4 datagram, 1 channel only, from @cornejotux
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    D20210330-T123857.raw:
+      instrument: EK80
+      description: do not contain filter coefficients
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+ek80_bb_complex_multiplex.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek80_bb_with_calibration.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek80_duplicate_ping_times.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek80_ext.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek80_invalid_env_datagrams.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek80_missing_sound_velocity_profile.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek80_new.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ek80_sequence.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+es60.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+es70.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+es80.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+legacy_datatree.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references: []
+  notes: null
+  files: {}
+
+ts_spectrum_example_data.zip:
+  documented_checksum: null
+  instrument: null
+  description: null
+  source: null
+  contributor: null
+  references:
+    - Andersen, L. N., et al. (2024). Quantitative processing of broadband data as implemented in a scientific split-beam echosounder. Methods in Ecology and Evolution, 15(2), 317–328. https://doi.org/10.1111/2041-210X.14261
+  notes: This pre-release is intended for staging new files in the release assets for an upcoming release.
+  files:
+    IMR-D20211215-T143432-TSf.raw:
+      instrument: null
+      description: Broadband EK80 FM dataset from the CRIMAC broadband processing example described in Andersen et al. (2024).
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    crimac_tsf_reference_outputs.npz:
+      instrument: null
+      description: Reference outputs generated from the same dataset using the CRIMAC broadband target strength processing workflow. These outputs are provided for convenience and can be used to validate the echopype implementation against the CRIMAC reference results.
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+resample_to_geometry_example_data.zip:
+  documented_checksum: null
+  instrument: null
+  description: Reference outputs generated using Echoview's Match Geometry algorithm after resampling all channels onto the 200 kHz channel geometry. These files are provided for validation purposes and can be used to compare the `echopype.commongrid.resample_to_geometry()` implementation against Echoview reference results.
+  source: null
+  contributor: null
+  references:
+    - Echoview Software Pty Ltd. Match Geometry Algorithm. https://support.echoview.com/WebHelp/Reference/Algorithms/Operators/Match_geometry_algorithm.htm
+  notes: null
+  files:
+    18kHz_regridded.sv.csv:
+      instrument: null
+      description: null
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    120kHz_regridded.sv.csv:
+      instrument: null
+      description: null
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    200kHz.sv.csv:
+      instrument: null
+      description: null
+      source: null
+      contributor: null
+      references: []
+      notes: null
+
+    Hake-D20230811-T165727.raw:
+      instrument: null
+      description: EK80 CW dataset from the NOAA NCEI/WCSD public fisheries acoustics archive and also used in the echopype Getting Started notebook.
+      source: null
+      contributor: null
+      references: []
+      notes: null
