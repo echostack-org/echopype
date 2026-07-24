@@ -3,6 +3,12 @@
 # If you wish to continue using _config.yml, make edits to that file and
 # re-generate this one.
 ###############################################################################
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 author = 'Echopype Developers'
 comments_config = {'hypothesis': False, 'utterances': False}
 copyright = '2026'
