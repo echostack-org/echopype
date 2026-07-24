@@ -441,7 +441,7 @@ def resample_to_geometry(
     target_grid: xr.DataArray | None = None,
 ):
     """
-    Regrids a variable across all channels in the EchoData object to
+    Regrids a variable across all channels in an Sv or Sp dataset to
     a common range geometry specified by either a target channel or a custom target grid.
     Ping time is assumed identical for all input channels.
 
@@ -526,6 +526,7 @@ def resample_to_geometry(
     valid_target_grid_dims = {
         ("range_sample",),
         ("ping_time", "range_sample"),
+        ("range_sample", "ping_time"),
     }
 
     if target_grid is not None and target_grid.dims not in valid_target_grid_dims:
