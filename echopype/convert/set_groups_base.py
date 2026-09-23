@@ -124,7 +124,13 @@ class SetGroupsBase(abc.ABC):
             model_family = SONAR_MODELS[self.sonar_model]["family"]
             # set time_val to earliest ping_time among all channels
             if model_family in ["Ex60", "Ex80"]:
-                return [np.array([v[0] for v in self.parser_obj.ping_time.values()]).min()]
+                ping_times = [v[0] for v in self.parser_obj.ping_time.values()]
+                # Partial/truncated raw files can yield no channels or empty ping arrays
+                if len(ping_times) == 0 or all(
+                    hasattr(t, "__len__") and len(t) == 0 for t in ping_times
+                ):
+                    return [np.nan]
+                return [np.array(ping_times).min()]
             elif model_family == "AZFP":
                 return [self.parser_obj.ping_time[0]]
             else:
@@ -252,7 +258,8 @@ class SetGroupsBase(abc.ABC):
                     lat.append(np.nan)
                     warnings.warn(
                         "At least one latitude entry is problematic and "
-                        f"are assigned None in the converted data: {str(ve)}"
+                        f"are assigned None in the converted data: {str(ve)}",
+                        category=RuntimeWarning,
                     )
                 try:
                     lon.append(x.longitude if hasattr(x, "longitude") else np.nan)
@@ -260,7 +267,8 @@ class SetGroupsBase(abc.ABC):
                     lon.append(np.nan)
                     warnings.warn(
                         f"At least one longitude entry is problematic and "
-                        f"are assigned None in the converted data: {str(ve)}"
+                        f"are assigned None in the converted data: {str(ve)}",
+                        category=RuntimeWarning,
                     )
         else:
             lat, lon = [np.nan], [np.nan]

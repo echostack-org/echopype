@@ -2,6 +2,7 @@
 Functions for reducing variabilities in backscatter data.
 """
 
+import warnings
 from functools import partial
 
 import numpy as np
@@ -9,7 +10,6 @@ import xarray as xr
 
 from ..commongrid.utils import _parse_x_bin
 from ..utils.compute import _lin2log, _log2lin
-from ..utils.log import _init_logger
 from ..utils.prov import add_processing_level, echopype_prov_attrs, insert_input_processing_level
 from .transient_noise.transient_fielding import transient_noise_fielding
 from .transient_noise.transient_matecho import transient_noise_matecho
@@ -23,8 +23,6 @@ from .utils import (
     index_binning_pool_Sv,
     pool_Sv,
 )
-
-logger = _init_logger(__name__)
 
 
 def mask_transient_noise(
@@ -137,10 +135,11 @@ def mask_transient_noise(
     elif func == "nanmedian":
         # Warn when `func=nanmedian` since the sorting overhead makes it incredibly slow compared to
         # other non-sorting aggregations like `nanmean`.
-        logger.warning(
+        warnings.warn(
             "`func=nanmedian` is an incredibly slow operation due to the overhead sorting. "
             "We plan to add the Fielding Transient Noise Filter in the future"
-            "described here: https://github.com/OSOceanAcoustics/echopype/issues/1352"
+            "described here: https://github.com/OSOceanAcoustics/echopype/issues/1352",
+            category=ResourceWarning,
         )
         func = np.nanmedian
 
@@ -394,11 +393,15 @@ def estimate_background_noise(
         background_noise_max = extract_dB(background_noise_max)
 
     # Compute transmission loss
-    spreading_loss = 20 * np.log10(ds_Sv["echo_range"].where(ds_Sv["echo_range"] >= 1, other=1))
-    absorption_loss = 2 * ds_Sv["sound_absorption"] * ds_Sv["echo_range"]
+    echo_range = ds_Sv["echo_range"]
+
+    transmission_loss = (
+        20 * np.log10(echo_range.where(echo_range >= 1, other=1))  # spreading
+        + 2 * ds_Sv["sound_absorption"] * echo_range  # absorption
+    )
 
     # Compute power binned averages
-    power_cal = _log2lin(ds_Sv["Sv"] - spreading_loss - absorption_loss)
+    power_cal = _log2lin(ds_Sv["Sv"] - transmission_loss)
     power_cal_binned_avg = 10 * np.log10(
         power_cal.coarsen(
             ping_time=ping_num,
@@ -426,8 +429,7 @@ def estimate_background_noise(
         noise.reindex({"ping_time": power_cal["ping_time"]}, method="ffill").assign_coords(
             ping_time=ds_Sv["ping_time"]
         )
-        + spreading_loss
-        + absorption_loss
+        + transmission_loss
     )
 
     return Sv_noise
