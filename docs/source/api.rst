@@ -39,12 +39,6 @@ clean
 .. automodule:: echopype.clean
    :members:
 
-colormap
-^^^^^^^^
-
-.. automodule:: echopype.colormap
-   :members:
-
 commongrid
 ^^^^^^^^^^
 
@@ -75,9 +69,18 @@ qc
 .. automodule:: echopype.qc
    :members:
 
-
 Utilities
 ---------
 
+Seawater properties
+^^^^^^^^^^^^^^^^^^^
+
 .. automodule:: echopype.utils.uwa
    :members:
+
+Colormaps
+^^^^^^^^^
+
+.. automodule:: echopype.colormap
+   :members:
+
