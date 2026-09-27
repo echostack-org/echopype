@@ -22,12 +22,12 @@ The list of colormaps added can be found with this code:
     import echopype.colormap
     from matplotlib import colormaps
     print([name for name in colormaps if name.startswith('ep.')])
-    
+
 .. code-block:: text
    :caption: Output
 
    ['ep.ek500', 'ep.ek500_r']
-    
+
 """
 
 from . import cm
