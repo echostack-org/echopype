@@ -83,4 +83,3 @@ Colormaps
 
 .. automodule:: echopype.colormap
    :members:
-

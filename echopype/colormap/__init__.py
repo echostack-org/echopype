@@ -4,9 +4,9 @@ Colormaps for plotting echograms.
 Importing this package (i.e., ``import echopype.colormaps``) adds echogram-specific colormaps to
 Matplotlib's existing colormaps. These
 always start with ``ep.`` and come in pairs (the colormap and a reversed version with a name
-ending in ``_r``). 
+ending in ``_r``).
 
-Echopype currently provides two colormaps, ``ep.ek500`` and ``ep.ek500_r``, based on the 
+Echopype currently provides two colormaps, ``ep.ek500`` and ``ep.ek500_r``, based on the
 colormap that the Simrad EK500 echosounder used.
 
 Notes
