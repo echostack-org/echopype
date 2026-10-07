@@ -36,7 +36,7 @@ suggest doing this with `conda` or `uv`.
 
   ```shell
   # Create and activate the development environment
-  conda create -c conda-forge -n echopype-dev --yes python=3.12
+  conda create -c conda-forge -n echopype-dev --yes python=3.13
   conda activate echopype-dev
 
   # Upgrade pip to support dependency groups
@@ -57,7 +57,7 @@ suggest doing this with `conda` or `uv`.
   ```shell
   # Create .venv and install echopype in editable mode
   # with the default development and testing dependencies.
-  # The ~/.python-version file in the repository sets which version of Python is installed (3.12 at the moment).
+  # The ~/.python-version file in the repository sets which version of Python is installed (3.13 at the moment).
   uv sync
   ```
 
