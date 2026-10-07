@@ -1,12 +1,10 @@
+import warnings
 from typing import List, Optional
 
 import numpy as np
 import xarray as xr
 
 from ..echodata import EchoData
-from ..utils.log import _init_logger
-
-logger = _init_logger(__name__)
 
 
 def _clean_reversed(time_old: np.ndarray, win_len: int):
@@ -53,7 +51,7 @@ def coerce_increasing_time(
         the median pinging interval is used to infer the next ping time
 
     Examples
-    -----
+    --------
     >>> import xarray as xr
     >>> from echopype.qc.api import exist_reversed_time, coerce_increasing_time
     >>> ds = xr.open_dataset("my_dataset.nc")
@@ -124,9 +122,10 @@ def check_and_correct_reversed_time(
     """
 
     if time_str in combined_group and exist_reversed_time(combined_group, time_str):
-        logger.warning(
-            f"{ed_group} {time_str} reversal detected; {time_str} will be corrected"  # noqa
-            " (see https://github.com/OSOceanAcoustics/echopype/pull/297)"
+        warnings.warn(
+            f"{ed_group} {time_str} reversal detected; {time_str} will be corrected "
+            "see https://github.com/echostack-org/echopype/pull/297",
+            category=UserWarning,
         )
         old_time = combined_group[time_str].copy()
         coerce_increasing_time(combined_group, time_name=time_str)

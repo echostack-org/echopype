@@ -46,8 +46,8 @@ def single_ek60_zarr(test_path):
             "s3://data/ek60/ncei-wcsd/Summer2017-D20170615-T190214.zarr",
             **dict(
                 client_kwargs=dict(endpoint_url="http://localhost:9000/"),
-                key="minioadmin",
-                secret="minioadmin",
+                key="s3admin",
+                secret="s3admin",
             ),
         ),
     ],
@@ -335,16 +335,11 @@ class TestEchoData:
 # TODO: Add test_open_converted with zarr v3 test data since format changed. open_converted works but needs a test.  # noqa: E501
 
 @pytest.mark.integration
-def test_open_converted(ek60_converted_zarr, minio_bucket):  # noqa
+def test_open_converted(ek60_converted_zarr, s3_storage_options):  # noqa
     def _check_path(zarr_path):
-        storage_options = {}
         if zarr_path.startswith("s3://"):
-            storage_options = dict(
-                client_kwargs=dict(endpoint_url="http://localhost:9000/"),
-                key="minioadmin",
-                secret="minioadmin",
-            )
-        return storage_options
+            return s3_storage_options
+        return {}
 
     storage_options = {}
     if not isinstance(ek60_converted_zarr, fsspec.FSMap):
@@ -798,7 +793,7 @@ def test_convert_legacy_versions_ek80(legacy_datatree, legacy_datatree_filename)
 
 
 @pytest.mark.unit
-def test_echodata_delete(caplog, ek60_path):
+def test_echodata_delete(recwarn, ek60_path):
     """
     Check for correct removal behavior and no warnings captured in echodata delete.
     """
@@ -836,17 +831,11 @@ def test_echodata_delete(caplog, ek60_path):
     # Check that temp zarr path exists
     assert os.path.exists(temp_zarr_path)
 
-    # Turn on logger verbosity
-    echopype.utils.log.verbose(override=True)
-
     # Delete temp zarr in temp zarr path
     ed.__del__()
 
-    # Turn off logger verbosity
-    echopype.utils.log.verbose(override=False)
-
     # Check that no exceptions were wrapped by warnings
-    assert not any("Warning: Exception ignored in:" in record.message for record in caplog.records)
+    assert not any("Warning: Exception ignored in:" in str(record.message) for record in recwarn)
 
     # Check that it doesn't exist
     assert not os.path.exists(temp_zarr_path)

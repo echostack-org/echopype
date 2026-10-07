@@ -36,7 +36,7 @@ suggest doing this with `conda` or `uv`.
 
   ```shell
   # Create and activate the development environment
-  conda create -c conda-forge -n echopype-dev --yes python=3.12
+  conda create -c conda-forge -n echopype-dev --yes python=3.13
   conda activate echopype-dev
 
   # Upgrade pip to support dependency groups
@@ -57,7 +57,7 @@ suggest doing this with `conda` or `uv`.
   ```shell
   # Create .venv and install echopype in editable mode
   # with the default development and testing dependencies.
-  # The ~/.python-version file in the repository sets which version of Python is installed (3.12 at the moment).
+  # The ~/.python-version file in the repository sets which version of Python is installed (3.13 at the moment).
   uv sync
   ```
 
@@ -82,48 +82,53 @@ into these services.
 If your contribution requires new test data, contact the maintainers
 (@leewujung, @ctuguinay, @LOCEANlloydizard) to have them added to the test-data collection.
 
+Every new test-data bundle should also be documented in the test data inventory.
+See {ref}`contrib:test-data` for contributor instructions and
+{ref}`test-data-inventory` for the generated inventory of all registered bundles.
+
 ### Running the tests
 
-To run all Echopype tests:
+Most tests use data directly from the local Pooch cache. A subset of integration
+tests also require local HTTP and S3-compatible services. To run the full test
+suite, start these services first. We use SeaweedFS 4.48 for S3 on
+`http://localhost:9000/` and an HTTP server on port 8080. Linux/macOS use
+the upstream SeaweedFS Docker image; Windows downloads the matching native
+release. The local test access key and secret are both `s3admin`.
 
-```shell
-uv run pytest -vv
-```
-
-To run tests for specific modules, provide their paths separated by spaces:
-
-```shell
-uv run pytest -vv echopype/calibrate/calibrate_ek.py echopype/mask/api.py
-```
-
-To run specific test files:
-
-```shell
-uv run pytest -vv echopype/tests/convert/test_convert_azfp.py echopype/tests/clean/test_noise.py
-```
-
-Most tests use data directly from the local Pooch cache. Some integration tests
-also require local HTTP and S3-compatible services provided through Docker.
-
-On Linux/macOS, start the services with:
+On Linux/macOS:
 
 ```shell
 uv run python .ci_helpers/docker/setup-services.py --deploy
 ```
 
-When finished, stop the services with:
-
-```shell
-uv run python .ci_helpers/docker/setup-services.py --tear-down
-```
-
-On Windows PowerShell, start the services with:
+On Windows PowerShell:
 
 ```powershell
 uv run python .ci_helpers/setup-services-windows.py start
 ```
 
-When finished, stop the services with:
+Then run all Echopype tests:
+
+```shell
+uv run pytest -vv
+```
+
+If you are only working on a specific module or test file that does not rely on
+these services, you can run it directly without starting them, for example:
+
+```shell
+uv run pytest -vv echopype/tests/convert/test_convert_azfp.py
+```
+
+When finished, stop the services.
+
+On Linux/macOS:
+
+```shell
+uv run python .ci_helpers/docker/setup-services.py --tear-down
+```
+
+On Windows PowerShell:
 
 ```powershell
 uv run python .ci_helpers/setup-services-windows.py stop
@@ -156,10 +161,11 @@ we use the [numpydoc style](https://numpydoc.readthedocs.io/en/latest/format.htm
 ### General setup
 
 Echopype documentation (https://echopype.readthedocs.io) is based on [Jupyter Book](https://jupyterbook.org/en/stable/intro.html),
-which are rendered under the hood with [Sphinx](https://www.sphinx-doc.org).
+which is rendered under the hood with [Sphinx](https://www.sphinx-doc.org).
 The documentation is hosted on [Read The Docs](https://readthedocs.org).
 
-To build the documentation locally, run:
+In most cases, contributors do not need to build the documentation locally, as it is automatically built and checked by Read the Docs for every pull request. However, if your changes affect the documentation, notebooks, or generated API documentation, you may wish to build it locally before opening a PR. To build the documentation locally, run:
+
 ```{tab} Conda
 
   ```shell
@@ -167,13 +173,13 @@ To build the documentation locally, run:
   python -m pip install --group docs
 
   # Build the documentation
-  jupyter-book build docs/source --path-output docs
+  jupyter-book build -W --keep-going docs/source --path-output docs
   ```
 
 ```{tab} Uv
 
   ```shell
-  uv run --group docs sphinx-build -b html ./docs/source ./docs/_build
+  uv run --group docs sphinx-build -W --keep-going -b html ./docs/source ./docs/_build
   ```
 
 To view the generated HTML files open `docs/_build/html/index.html` in your browser.
@@ -189,7 +195,6 @@ For some quick orientation of where things are:
 ### Versions
 
 ReadTheDocs defaults to having its `stable` version tracking the most recent release and the `main` version tracking the latest changes in the `main` branch of the repository. We follow this pattern for our documentation. See [RTD Versions](https://docs.readthedocs.io/en/stable/versions.html) for more information.
-
 
 
 (contrib:setup_CI)=

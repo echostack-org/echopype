@@ -5,14 +5,11 @@ import numpy as np
 import xarray as xr
 
 from ..utils.coding import set_time_encodings
-from ..utils.log import _init_logger
 
 # fmt: off
 from .set_groups_base import SetGroupsBase
 
 # fmt: on
-
-logger = _init_logger(__name__)
 
 
 class SetGroupsEK60(SetGroupsBase):
@@ -78,6 +75,13 @@ class SetGroupsEK60(SetGroupsBase):
             for key, value in self.sorted_channel.items()
             if len(self.parser_obj.ping_data_dict["power"][key]) != 0
         }
+
+        if self.parser_obj.channels is not None:
+            self.sorted_channel = {
+                key: value
+                for key, value in self.sorted_channel.items()
+                if value in self.parser_obj.channels
+            }
 
         # obtain corresponding frequency dict from sorted channels
         self.freq = [

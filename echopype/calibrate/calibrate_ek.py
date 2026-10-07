@@ -1,3 +1,4 @@
+import warnings
 from typing import Dict
 
 import numpy as np
@@ -5,7 +6,6 @@ import xarray as xr
 
 from ..echodata import EchoData
 from ..echodata.simrad import retrieve_correct_beam_group
-from ..utils.log import _init_logger
 from .cal_params import _get_interp_da, get_cal_params_EK
 from .calibrate_base import CalibrateBase
 from .ecs import conform_channel_order, ecs_ds2dict, ecs_ev2ep
@@ -18,8 +18,6 @@ from .ek80_complex import (
 )
 from .env_params import get_env_params_EK
 from .range import compute_range_EK, range_mod_TVG_EK
-
-logger = _init_logger(__name__)
 
 
 def _slice_beam_vend(beam, vend, slice_dict):
@@ -126,10 +124,10 @@ class CalibrateEK(CalibrateBase):
                     ping_time=beam["ping_time"],
                 )
             except Exception as e:
-                logger.warning(
+                warnings.warn(
                     "Could not compute tau_effective from transmit signal in power encoding mode; "
-                    "falling back to transmit_duration_nominal. Error: %s",
-                    repr(e),
+                    f"falling back to transmit_duration_nominal. Error: {e!r}",
+                    category=RuntimeWarning,
                 )
                 tau_effective = beam["transmit_duration_nominal"].isel(ping_time=0)
 
@@ -350,7 +348,6 @@ class CalibrateEK80(CalibrateEK):
             self.env_params = ecs_ds2dict(
                 conform_channel_order(ds_env, self.beam["frequency_nominal"])
             )
-            ds_cal_BB = conform_channel_order(ds_cal_BB, self.beam["frequency_nominal"])
             ds_cal_NB = self._scale_ecs_cal_params_NB(
                 conform_channel_order(ds_cal_NB, self.beam["frequency_nominal"]),
                 self.beam,
@@ -358,6 +355,7 @@ class CalibrateEK80(CalibrateEK):
             cal_params_dict = ecs_ds2dict(ds_cal_NB)
 
             if ds_cal_BB is not None:
+                ds_cal_BB = conform_channel_order(ds_cal_BB, self.beam["frequency_nominal"])
                 # get_cal_params_EK fill in empty params at param level, not channel level,
                 # so need to do freq-dep interpolation here
                 self.cal_params = self._assimilate_ecs_cal_params(cal_params_dict, ds_cal_BB)
@@ -593,11 +591,11 @@ class CalibrateEK80(CalibrateEK):
                     ping_time=self.beam["ping_time"],
                 )
             except Exception as e:
-                logger.warning(
+                warnings.warn(
                     "Could not compute tau_effective "
                     "from transmit signal in complex encoding mode; "
-                    "falling back to transmit_duration_nominal. Error: %s",
-                    repr(e),
+                    f"falling back to transmit_duration_nominal. Error: {e!r}",
+                    category=RuntimeWarning,
                 )
                 tau_effective = self.beam["transmit_duration_nominal"].isel(ping_time=0)
             # Use pulse_duration in place of tau_effective for GPT channels

@@ -2,8 +2,9 @@ import datetime
 import os
 import re
 import sys
+import warnings
 from collections import defaultdict
-from typing import Any, Dict, Literal, Optional, Tuple
+from typing import Any, Dict, Literal, Optional, Tuple, Union
 
 import dask
 import dask.array as da
@@ -12,7 +13,6 @@ import zarr
 from dask.array.core import auto_chunks
 
 from ..utils.io import create_temp_zarr_store
-from ..utils.log import _init_logger
 from .utils.ek_raw_io import RawSimradFile, SimradEOF
 from .utils.ek_swap import calc_final_shapes
 
@@ -22,9 +22,6 @@ FILENAME_DATETIME_EK60 = (
 
 # Manufacturer-specific power conversion factor
 INDEX2POWER = 10.0 * np.log10(2.0) / 256.0
-
-logger = _init_logger(__name__)
-
 
 # --- Windows-safe path component sanitizer (also harmless on POSIX) ---
 _INVALID_FS_CHARS = r'[<>:"/\\|?*]'
@@ -38,7 +35,7 @@ def _sanitize_component(s: str) -> str:
 class ParseBase:
     """Parent class for all convert classes."""
 
-    def __init__(self, file, storage_options, sonar_model):
+    def __init__(self, file, storage_options, sonar_model, channels=None):
         self.source_file = file
         self.timestamp_pattern = None  # regex pattern used to grab datetime embedded in filename
         self.ping_time = []  # list to store ping time
@@ -46,6 +43,7 @@ class ParseBase:
         self.sonar_model = sonar_model
         self.data_types = ["power", "angle", "complex"]
         self.raw_types = ["receive", "transmit"]
+        self.channels = channels
 
     def _print_status(self):
         """Prints message to console giving information about the raw file being parsed."""
@@ -54,8 +52,8 @@ class ParseBase:
 class ParseEK(ParseBase):
     """Class for converting data from Simrad echosounders."""
 
-    def __init__(self, file, bot_file, idx_file, storage_options, sonar_model):
-        super().__init__(file, storage_options, sonar_model)
+    def __init__(self, file, bot_file, idx_file, storage_options, sonar_model, channels=None):
+        super().__init__(file, storage_options, sonar_model, channels)
         # Parent class attributes
         #  regex pattern used to grab datetime embedded in filename
         self.timestamp_pattern = FILENAME_DATETIME_EK60
@@ -81,6 +79,42 @@ class ParseEK(ParseBase):
 
         self.CON1_datagram = None  # Holds the ME70 CON1 datagram
 
+    def _get_available_channel_ids(self) -> list:
+        """Return all channels available in the config datagram."""
+        if self.config_datagram is None:
+            return []
+        if "configuration" in self.config_datagram:
+            return list(self.config_datagram["configuration"].keys())
+        if "transceivers" in self.config_datagram:
+            return [tx["channel_id"] for tx in self.config_datagram["transceivers"].values()]
+        return []
+
+    def _validate_channels(self) -> None:
+        """Validate requested channel_id values against the config datagram."""
+        available = set(self._get_available_channel_ids())
+        requested = set(self.channels)
+        invalid = requested - available
+        if invalid:
+            raise ValueError(
+                f"Requested channel_id(s) not found in file: {sorted(invalid)}. "
+                f"Available channel_id(s): {sorted(available)}"
+            )
+        self.channels = requested
+
+    def _resolve_channel_id(self, channel_key: Union[int, str]) -> str:
+        """Map an EK60 channel index or EK80 channel key to channel_id."""
+        if isinstance(channel_key, str):
+            return channel_key
+        if channel_key not in self.config_datagram["transceivers"]:
+            return ""
+        return self.config_datagram["transceivers"][channel_key]["channel_id"]
+
+    def _is_selected(self, channel_key: Union[int, str]) -> bool:
+        """Return True if the channel should be parsed and stored."""
+        if self.channels is None:
+            return True
+        return self._resolve_channel_id(channel_key) in self.channels
+
     def _print_status(self):
         if sys.version_info < (3, 11, 0):
             time = datetime.datetime.utcfromtimestamp(
@@ -91,9 +125,7 @@ class ParseEK(ParseBase):
                 self.config_datagram["timestamp"].tolist() / 1e9, datetime.UTC
             ).strftime("%Y-%b-%d %H:%M:%S")
 
-        logger.info(
-            f"parsing file {os.path.basename(self.source_file)}, " f"time of first ping: {time}"
-        )
+        print(f"parsing file {os.path.basename(self.source_file)}, " f"time of first ping: {time}")
 
     @property
     def num_transducer_sectors(self) -> Dict[Any, int]:
@@ -415,6 +447,9 @@ class ParseEK(ParseBase):
             # IDs of the channels found in the dataset
             # self.ch_ids = list(self.config_datagram['configuration'].keys())
 
+            if self.channels is not None:
+                self._validate_channels()
+
             # Read the rest of datagrams
             self._read_datagrams(fid)
 
@@ -560,11 +595,12 @@ class ParseEK(ParseBase):
 
             # RAW0 datagrams store raw acoustic data for a channel for EK60
             elif new_datagram["type"].startswith("RAW0"):
-                # Save channel-specific ping time. The channels are stored as 1-based indices
-                self.ping_time[new_datagram["channel"]].append(new_datagram["timestamp"])
+                if self._is_selected(new_datagram["channel"]):
+                    # Save channel-specific ping time. The channels are stored as 1-based indices
+                    self.ping_time[new_datagram["channel"]].append(new_datagram["timestamp"])
 
-                # Append ping by ping data
-                self._append_channel_ping_data(new_datagram)
+                    # Append ping by ping data
+                    self._append_channel_ping_data(new_datagram)
 
             # EK80 datagram sequence:
             #   - XML0 pingsequence
@@ -574,38 +610,40 @@ class ParseEK(ParseBase):
             # RAW3 datagrams store raw acoustic data for a channel for EK80
             elif new_datagram["type"].startswith("RAW3"):
                 if "EC150" not in new_datagram["channel_id"]:
-                    # print(f"{new_datagram['channel_id']} from RAW3 -- NOT SKIPPING")
-                    curr_ch_id = new_datagram["channel_id"]
-                    # Check if the proceeding Parameter XML does not
-                    # match with data in this RAW3 datagram
-                    if current_parameters["channel_id"] != curr_ch_id:
-                        raise ValueError("Parameter ID does not match RAW")
+                    if self._is_selected(new_datagram["channel_id"]):
+                        # print(f"{new_datagram['channel_id']} from RAW3 -- NOT SKIPPING")
+                        curr_ch_id = new_datagram["channel_id"]
+                        # Check if the proceeding Parameter XML does not
+                        # match with data in this RAW3 datagram
+                        if current_parameters["channel_id"] != curr_ch_id:
+                            raise ValueError("Parameter ID does not match RAW")
 
-                    # Save channel-specific ping time
-                    self.ping_time[curr_ch_id].append(new_datagram["timestamp"])
+                        # Save channel-specific ping time
+                        self.ping_time[curr_ch_id].append(new_datagram["timestamp"])
 
-                    # Append ping by ping data
-                    new_datagram.update(current_parameters)
-                    self._append_channel_ping_data(new_datagram)
+                        # Append ping by ping data
+                        new_datagram.update(current_parameters)
+                        self._append_channel_ping_data(new_datagram)
                 # else:
                 #     print(f"{new_datagram['channel_id']} from RAW3")
 
             # RAW4 datagrams store raw transmit pulse for a channel for EK80
             elif new_datagram["type"].startswith("RAW4"):
                 if "EC150" not in new_datagram["channel_id"]:
-                    # print(f"{new_datagram['channel_id']} from RAW4 -- NOT SKIPPING")
-                    curr_ch_id = new_datagram["channel_id"]
-                    # Check if the proceeding Parameter XML does not
-                    # match with data in this RAW4 datagram
-                    if current_parameters["channel_id"] != curr_ch_id:
-                        raise ValueError("Parameter ID does not match RAW")
+                    if self._is_selected(new_datagram["channel_id"]):
+                        # print(f"{new_datagram['channel_id']} from RAW4 -- NOT SKIPPING")
+                        curr_ch_id = new_datagram["channel_id"]
+                        # Check if the proceeding Parameter XML does not
+                        # match with data in this RAW4 datagram
+                        if current_parameters["channel_id"] != curr_ch_id:
+                            raise ValueError("Parameter ID does not match RAW")
 
-                    # Ping time is identical to the immediately following RAW3 datagram
-                    # so does not need to be stored separately
+                        # Ping time is identical to the immediately following RAW3 datagram
+                        # so does not need to be stored separately
 
-                    # Append ping by ping data
-                    new_datagram.update(current_parameters)
-                    self._append_channel_ping_data(new_datagram, raw_type="transmit")
+                        # Append ping by ping data
+                        new_datagram.update(current_parameters)
+                        self._append_channel_ping_data(new_datagram, raw_type="transmit")
                 # else:
                 #     print(f"{new_datagram['channel_id']} from RAW4")
 
@@ -634,27 +672,28 @@ class ParseEK(ParseBase):
             # by channel, stage, and timestamp
             elif new_datagram["type"].startswith("FIL"):
                 if "EC150" not in new_datagram["channel_id"]:
-                    self.fil["timestamp"].append(new_datagram["timestamp"])
-                    self.fil[
-                        (
-                            new_datagram["channel_id"],
-                            new_datagram["stage"],
-                            "coeffs",
-                            new_datagram["timestamp"],
-                        )
-                    ] = new_datagram["coefficients"]
-                    self.fil[
-                        (
-                            new_datagram["channel_id"],
-                            new_datagram["stage"],
-                            "deci_fac",
-                            new_datagram["timestamp"],
-                        )
-                    ] = new_datagram["decimation_factor"]
+                    if self._is_selected(new_datagram["channel_id"]):
+                        self.fil["timestamp"].append(new_datagram["timestamp"])
+                        self.fil[
+                            (
+                                new_datagram["channel_id"],
+                                new_datagram["stage"],
+                                "coeffs",
+                                new_datagram["timestamp"],
+                            )
+                        ] = new_datagram["coefficients"]
+                        self.fil[
+                            (
+                                new_datagram["channel_id"],
+                                new_datagram["stage"],
+                                "deci_fac",
+                                new_datagram["timestamp"],
+                            )
+                        ] = new_datagram["decimation_factor"]
 
             # TAG datagrams contain time-stamped annotations inserted via the recording software
             elif new_datagram["type"].startswith("TAG"):
-                logger.info("TAG datagram encountered.")
+                print("TAG datagram encountered.")
 
             # BOT datagrams contain sounder detected bottom depths from .bot files
             elif new_datagram["type"].startswith("BOT"):
@@ -673,9 +712,12 @@ class ParseEK(ParseBase):
             # DEP datagrams contain sounder detected bottom depths from .out files
             # as well as reflectivity data
             elif new_datagram["type"].startswith("DEP"):
-                logger.info("DEP datagram encountered.")
+                print("DEP datagram encountered.")
             else:
-                logger.info("Unknown datagram type: " + str(new_datagram["type"]))
+                warnings.warn(
+                    f"Unknown datagram type: {new_datagram['type']}",
+                    category=UserWarning,
+                )
 
     def _append_channel_ping_data(
         self, datagram, raw_type: Literal["transmit", "receive"] = "receive"

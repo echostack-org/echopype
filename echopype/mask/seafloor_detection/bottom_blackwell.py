@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.ndimage as ndima
 import xarray as xr
-from scipy.signal import convolve2d
 
 from echopype.mask.seafloor_detection.utils import _check_inputs, _parse_blackwell_thresholds
 from echopype.utils.compute import _lin2log, _log2lin
@@ -114,13 +113,26 @@ def bottom_blackwell(
     thetachunk = theta[r0_idx:r1_idx, :]
     phichunk = phi[r0_idx:r1_idx, :]
 
-    # Build angle masks
-    ktheta = np.ones((wtheta, wtheta)) / wtheta**2
-    kphi = np.ones((wphi, wphi)) / wphi**2
-
     # Angle masks
-    thetamaskchunk = convolve2d(thetachunk, ktheta, "same", boundary="symm") ** 2 > ttheta
-    phimaskchunk = convolve2d(phichunk, kphi, "same", boundary="symm") ** 2 > tphi
+    thetamaskchunk = (
+        ndima.uniform_filter(
+            thetachunk,
+            size=wtheta,
+            mode="reflect",
+        )
+        ** 2
+        > ttheta
+    )
+
+    phimaskchunk = (
+        ndima.uniform_filter(
+            phichunk,
+            size=wphi,
+            mode="reflect",
+        )
+        ** 2
+        > tphi
+    )
     anglemaskchunk = thetamaskchunk | phimaskchunk
 
     # Apply Blackwell algorithm
