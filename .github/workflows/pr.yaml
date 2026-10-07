@@ -121,11 +121,14 @@ jobs:
         experimental: [false]
 
     services:
-      # TODO: figure out how to update tag when there's a new one
-      minio:
-        image: cormorack/minioci:latest
+      seaweedfs:
+        image: chrislusf/seaweedfs:4.48
+        env:
+          AWS_ACCESS_KEY_ID: s3admin
+          AWS_SECRET_ACCESS_KEY: s3admin
+          S3_BUCKET: data,data-output
         ports:
-          - 9000:9000
+          - 9000:8333
       httpserver:
         image: httpd:2.4
         ports:
@@ -205,7 +208,7 @@ jobs:
         run: |
           pytest --collect-only -q
 
-      - name: Copy test data to MinIO and HTTP server
+      - name: Copy test data to SeaweedFS and HTTP server
         run: |
           python .ci_helpers/docker/setup-services.py --deploy --data-only --http-server ${{ job.services.httpserver.id }}
 
