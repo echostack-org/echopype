@@ -1,9 +1,105 @@
 import numpy as np
 import scipy.ndimage as ndima
 import xarray as xr
+import dask.array as da
+import dask_image.ndfilters as dask_ndfilters
 
 from echopype.mask.seafloor_detection.utils import _check_inputs, _parse_blackwell_thresholds
 from echopype.utils.compute import _lin2log, _log2lin
+
+
+def _dask_nanmedian(data: da.Array) -> float:
+    """Compute the exact median of finite values without materializing masked cells."""
+    finite_values = data[da.isfinite(data)].compute()
+    if finite_values.size == 0:
+        return np.nan
+    return float(np.median(finite_values))
+
+
+def _bottom_blackwell_dask(
+    Svchunk: xr.DataArray,
+    thetachunk: xr.DataArray,
+    phichunk: xr.DataArray,
+    depth_ref: xr.DataArray,
+    range_depth: np.ndarray,
+    ping_time: xr.DataArray,
+    r0_idx: int,
+    r1_idx: int,
+    tSv: float,
+    ttheta: float,
+    tphi: float,
+    offset: float,
+    wtheta: int,
+    wphi: int,
+    channel: str,
+) -> xr.DataArray:
+    """Run Blackwell detection with chunked arrays and Dask-image operations."""
+    sv_data = da.asarray(Svchunk.data)
+    theta_data = da.asarray(thetachunk.data).rechunk(sv_data.chunks)
+    phi_data = da.asarray(phichunk.data).rechunk(sv_data.chunks)
+
+    theta_mask = dask_ndfilters.uniform_filter(
+        theta_data, size=wtheta, mode="reflect"
+    ) ** 2 > ttheta
+    phi_mask = dask_ndfilters.uniform_filter(phi_data, size=wphi, mode="reflect") ** 2 > tphi
+    angle_mask = theta_mask | phi_mask
+
+    angle_mask_data = angle_mask.compute()
+    if angle_mask_data.any():
+        dask_angle_mask = da.from_array(angle_mask_data, chunks=sv_data.chunks)
+        selected_sv_linear = da.where(
+            dask_angle_mask, _log2lin(sv_data), np.nan
+        )
+        median_sv = _lin2log(_dask_nanmedian(selected_sv_linear))
+        if np.isnan(median_sv):
+            median_sv = np.inf
+        median_sv = max(float(median_sv), tSv)
+
+        sv_mask_data = (sv_data > median_sv).compute()
+        components, component_count = ndima.label(
+            sv_mask_data, structure=ndima.generate_binary_structure(2, 2)
+        )
+        del sv_mask_data, selected_sv_linear, dask_angle_mask
+
+        intercepted = np.unique(components[angle_mask_data])
+        intercepted = intercepted[intercepted != 0]
+        component_lookup = np.zeros(component_count + 1, dtype=bool)
+        component_lookup[intercepted] = True
+        mask_chunk = component_lookup[components]
+        del components, component_lookup, angle_mask_data
+    else:
+        mask_chunk = da.zeros(sv_data.shape, chunks=sv_data.chunks, dtype=bool)
+        del angle_mask_data
+
+    mask = da.pad(
+        mask_chunk,
+        ((r0_idx, len(range_depth) - r1_idx), (0, 0)),
+        mode="constant",
+    )
+    bottom_sample_idx = mask.argmax(axis=0)
+    depth_lookup = depth_ref.isel(
+        range_sample=xr.DataArray(
+            bottom_sample_idx,
+            dims=["ping_time"],
+            coords={"ping_time": ping_time},
+        )
+    )
+    bottom_depth = depth_lookup - offset
+
+    return xr.DataArray(
+        bottom_depth.data,
+        dims=["ping_time"],
+        coords={"ping_time": ping_time},
+        name="bottom_depth",
+        attrs={
+            "detector": "blackwell",
+            "threshold_Sv": float(tSv),
+            "threshold_angle_major": float(ttheta),
+            "threshold_angle_minor": float(tphi),
+            "offset_m": float(offset),
+            "channel": channel,
+        },
+    )
 
 
 def bottom_blackwell(
@@ -75,6 +171,14 @@ def bottom_blackwell(
          1-D bottom depth per ``ping_time`` with attributes:
          ``detector='blackwell'``, ``threshold_Sv``, ``threshold_angle_major``,
          ``threshold_angle_minor``, ``offset_m``, and ``channel``.
+
+     Notes
+     -----
+     Dask-backed inputs use chunked angle filtering and thresholding. The
+     thresholded search window is then labeled with SciPy to avoid the large
+     intermediate graphs and memory overhead of distributed component
+     reconciliation. The global median is computed exactly from finite,
+     angle-selected Sv values.
     """
 
     # Validate input variables and structure
@@ -103,7 +207,8 @@ def bottom_blackwell(
     max_depth_per_ping = depth_sel.max(dim="range_sample", skipna=True)
     deepest_ping_idx = int(max_depth_per_ping.argmax(dim="ping_time").values)
 
-    r = depth_sel.isel(ping_time=deepest_ping_idx).values
+    depth_ref = depth_sel.isel(ping_time=deepest_ping_idx, drop=True)
+    r = depth_ref.values
 
     # Define core detection range
     r0_idx = np.nanargmin(abs(r - r0))
@@ -112,6 +217,28 @@ def bottom_blackwell(
     Svchunk = Sv_sel[r0_idx:r1_idx, :]
     thetachunk = theta[r0_idx:r1_idx, :]
     phichunk = phi[r0_idx:r1_idx, :]
+
+    if any(
+        isinstance(array.data, da.Array)
+        for array in (Svchunk, thetachunk, phichunk)
+    ):
+        return _bottom_blackwell_dask(
+            Svchunk,
+            thetachunk,
+            phichunk,
+            depth_ref,
+            r,
+            ping_time,
+            r0_idx,
+            r1_idx,
+            tSv,
+            ttheta,
+            tphi,
+            offset,
+            wtheta,
+            wphi,
+            channel,
+        )
 
     # Angle masks
     thetamaskchunk = (

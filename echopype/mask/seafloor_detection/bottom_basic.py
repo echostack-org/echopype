@@ -1,4 +1,3 @@
-import numpy as np
 import xarray as xr
 
 from echopype.mask.seafloor_detection.utils import (
@@ -57,7 +56,8 @@ def bottom_basic(
 
     Notes
     -----
-    * Depth lookup uses `depth.isel(ping_time=0)` as the reference vector.
+    * Depth lookup uses `depth.isel(ping_time=0, drop=True)` as the reference vector and
+      vectorized xarray indexing to preserve lazy computation with Dask arrays.
     * If no sample meets the threshold in a ping, `argmax` on a False-only
       mask returns 0 (i.e., the first searched bin after the skipped region).
     """
@@ -65,23 +65,15 @@ def bottom_basic(
     Sv_sel, depth_sel = _check_inputs(ds, var_name, channel)
     tmin, tmax = _validate_threshold(threshold)
 
-    depth_ref = depth_sel.isel(ping_time=0)
+    depth_ref = depth_sel.isel(ping_time=0, drop=True)
     Sv_sliced = Sv_sel.isel(range_sample=slice(bin_skip_from_surface, None))
     cond = (Sv_sliced > tmin) & (Sv_sliced < tmax)
 
     # Find index of first match along range_sample
     idx = cond.argmax(dim="range_sample") + bin_skip_from_surface  # add back skipped samples
 
-    # Map index to depth using depth_ref
-    bottom_depth = xr.apply_ufunc(
-        lambda i: depth_ref[int(i)] if np.isfinite(i) else np.nan,
-        idx.astype(float),
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[float],
-    ) - float(
-        offset_m
-    )  # we remove the offset
+    # Vectorized indexing keeps the depth lookup labeled and lazy for Dask inputs.
+    bottom_depth = depth_ref.isel(range_sample=idx) - float(offset_m)
 
     # Return 1D DataArray with attributes
     return xr.DataArray(
