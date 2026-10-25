@@ -1,8 +1,8 @@
+import dask.array as da
+import dask_image.ndfilters as dask_ndfilters
 import numpy as np
 import scipy.ndimage as ndima
 import xarray as xr
-import dask.array as da
-import dask_image.ndfilters as dask_ndfilters
 
 from echopype.mask.seafloor_detection.utils import _check_inputs, _parse_blackwell_thresholds
 from echopype.utils.compute import _lin2log, _log2lin
@@ -38,18 +38,16 @@ def _bottom_blackwell_dask(
     theta_data = da.asarray(thetachunk.data).rechunk(sv_data.chunks)
     phi_data = da.asarray(phichunk.data).rechunk(sv_data.chunks)
 
-    theta_mask = dask_ndfilters.uniform_filter(
-        theta_data, size=wtheta, mode="reflect"
-    ) ** 2 > ttheta
+    theta_mask = (
+        dask_ndfilters.uniform_filter(theta_data, size=wtheta, mode="reflect") ** 2 > ttheta
+    )
     phi_mask = dask_ndfilters.uniform_filter(phi_data, size=wphi, mode="reflect") ** 2 > tphi
     angle_mask = theta_mask | phi_mask
 
     angle_mask_data = angle_mask.compute()
     if angle_mask_data.any():
         dask_angle_mask = da.from_array(angle_mask_data, chunks=sv_data.chunks)
-        selected_sv_linear = da.where(
-            dask_angle_mask, _log2lin(sv_data), np.nan
-        )
+        selected_sv_linear = da.where(dask_angle_mask, _log2lin(sv_data), np.nan)
         median_sv = _lin2log(_dask_nanmedian(selected_sv_linear))
         if np.isnan(median_sv):
             median_sv = np.inf
@@ -218,10 +216,7 @@ def bottom_blackwell(
     thetachunk = theta[r0_idx:r1_idx, :]
     phichunk = phi[r0_idx:r1_idx, :]
 
-    if any(
-        isinstance(array.data, da.Array)
-        for array in (Svchunk, thetachunk, phichunk)
-    ):
+    if any(isinstance(array.data, da.Array) for array in (Svchunk, thetachunk, phichunk)):
         return _bottom_blackwell_dask(
             Svchunk,
             thetachunk,
