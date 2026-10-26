@@ -22,7 +22,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python
-      uses: actions/setup-python@v7.0.0
+      uses: actions/setup-python@v7.1.0
       with:
         python-version: 3.13
 
@@ -46,7 +46,7 @@ jobs:
     needs: build-artifact
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/setup-python@v7.0.0
+    - uses: actions/setup-python@v7.1.0
       name: Install Python
       with:
         python-version: 3.13
