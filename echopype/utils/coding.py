@@ -3,6 +3,7 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 import xarray as xr
+from dask.array import Array as DaskArray
 from dask.array.core import auto_chunks
 from dask.utils import parse_bytes
 from xarray import coding
@@ -213,6 +214,32 @@ def set_zarr_encodings(
         chunk_size_tolerance = parse_bytes(ctol)
 
         if len(val.shape) > 0:
+            rechunk = True
+            if existing_chunks is not None:
+                # Perform chunk optimization
+                # 1. Get the chunk total from existing chunks
+                chunk_total = np.prod(existing_chunks) * val.dtype.itemsize
+                # 2. Get chunk size difference from the optimal chunk size
+                chunk_diff = optimal_chunk_size - chunk_total
+                # 3. Check difference from tolerance, if diff is less than
+                #    tolerance then no need to rechunk
+                if chunk_diff < chunk_size_tolerance:
+                    rechunk = False
+                    dask_formatted_chunks = existing_chunks
+
+            if rechunk:
+                # Use dask auto chunk to determine the optimal chunk
+                # spread for optimal chunk size
+                dask_formatted_chunks = _get_dask_auto_chunk(val, chunk_size=chunk_size)
+
+            # Dask expects chunk dictionary but Zarr expects list-like iterable of
+            # values in encoding
+            zarr_formatted_chunks = [*dask_formatted_chunks.values()]
+
+            encoding[name]["chunks"] = zarr_formatted_chunks
+            # Add temporary dask formatted_chunks to encoding for use in dask rechunking
+            if isinstance(ds[name].data, DaskArray):
+                encoding[name]["dask_formatted_chunks"] = dask_formatted_chunks
             if any(dim_size == 0 for dim_size in val.shape):
                 # If any dimension is zero, set chunks to None to avoid division by zero
                 encoding[name]["chunks"] = None
