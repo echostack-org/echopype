@@ -11,7 +11,7 @@ import xarray as xr
 
 from ..consolidate.api import POSITION_VARIABLES
 from ..qc.api import coerce_increasing_time, exist_reversed_time
-from ..utils.prov import add_processing_level, echopype_prov_attrs, insert_input_processing_level
+from ..utils.prov import echopype_prov_attrs
 from .utils import (
     _convert_bins_to_interval_index,
     _get_reduced_positions,
@@ -29,7 +29,6 @@ from .utils import (
 )
 
 
-@add_processing_level("L3*")
 def compute_MVBS(
     ds_Sv: xr.Dataset,
     range_var: Literal["echo_range", "depth"] = "echo_range",
@@ -195,12 +194,9 @@ def compute_MVBS(
     else:
         ds_MVBS["frequency_nominal"] = freq
 
-    ds_MVBS = insert_input_processing_level(ds_MVBS, input_ds=ds_Sv)
-
     return ds_MVBS
 
 
-@add_processing_level("L3*")
 def compute_MVBS_index_binning(ds_Sv, range_sample_num=100, ping_num=100):
     """
     Compute Mean Volume Backscattering Strength (MVBS)
@@ -269,12 +265,9 @@ def compute_MVBS_index_binning(ds_Sv, range_sample_num=100, ping_num=100):
 
     ds_MVBS["frequency_nominal"] = ds_Sv["frequency_nominal"]
 
-    ds_MVBS = insert_input_processing_level(ds_MVBS, input_ds=ds_Sv)
-
     return ds_MVBS
 
 
-@add_processing_level("L4")
 def compute_NASC(
     ds_Sv: xr.Dataset,
     range_bin: str = "10m",
@@ -630,7 +623,6 @@ def resample_to_geometry(
     prov_dict = echopype_prov_attrs(process_type="processing")
     prov_dict["processing_function"] = "commongrid.resample_to_geometry"
     new_ds = new_ds.assign_attrs(prov_dict)
-    new_ds = insert_input_processing_level(new_ds, ds_Sv)
     new_ds["echo_range"].attrs = ds_Sv["echo_range"].attrs
 
     return new_ds

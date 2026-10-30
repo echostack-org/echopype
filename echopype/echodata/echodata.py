@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
 from ..echodata.utils_platform import clip_by_time_dim, get_mappings_expanded
 from ..utils.coding import sanitize_dtypes, set_time_encodings
-from ..utils.prov import add_processing_level
 from .convention import sonarnetcdf_1
 from .widgets.utils import tree_repr
 from .widgets.widgets import _load_static_files, get_template
@@ -342,7 +341,6 @@ class EchoData:
         else:
             raise ValueError("Datatree not found!")
 
-    @add_processing_level("L1A")
     def update_platform(
         self,
         extra_platform_data: xr.Dataset,

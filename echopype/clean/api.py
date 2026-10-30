@@ -10,7 +10,7 @@ import xarray as xr
 
 from ..commongrid.utils import _parse_x_bin
 from ..utils.compute import _lin2log, _log2lin
-from ..utils.prov import add_processing_level, echopype_prov_attrs, insert_input_processing_level
+from ..utils.prov import echopype_prov_attrs
 from .transient_noise.transient_fielding import transient_noise_fielding
 from .transient_noise.transient_matecho import transient_noise_matecho
 from .utils import (
@@ -435,7 +435,6 @@ def estimate_background_noise(
     return Sv_noise
 
 
-@add_processing_level("L*B")
 def remove_background_noise(
     ds_Sv: xr.Dataset,
     ping_num: int,
@@ -505,10 +504,6 @@ def remove_background_noise(
     prov_dict = echopype_prov_attrs(process_type="processing")
     prov_dict["processing_function"] = "clean.remove_background_noise"
     ds_Sv = ds_Sv.assign_attrs(prov_dict)
-
-    # The output `ds_Sv` is built as a copy of the input `ds_Sv`, so the step below is
-    # not needed, strictly speaking. But doing makes the decorator function more generic
-    ds_Sv = insert_input_processing_level(ds_Sv, input_ds=ds_Sv)
 
     return ds_Sv
 
