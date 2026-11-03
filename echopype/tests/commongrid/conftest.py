@@ -109,9 +109,6 @@ def _add_latlon_depth(ds_Sv, latlon=False, depth=False, lat_attrs={}, lon_attrs=
         ds_Sv["latitude"] = (["ping_time"], latitude, lat_attrs)
         ds_Sv["longitude"] = (["ping_time"], longitude, lon_attrs)
 
-        # Need processing level code for compute MVBS to work!
-        ds_Sv.attrs["processing_level"] = "Level 2A"
-
     if depth:
         # Add depth
         ds_Sv = ds_Sv.pipe(add_depth, depth_offset=depth_offset)

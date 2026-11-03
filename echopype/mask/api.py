@@ -21,7 +21,7 @@ from ..commongrid.utils import (
     ping_time_bin_parsing_and_conversion,
 )
 from ..utils.io import validate_source
-from ..utils.prov import add_processing_level, echopype_prov_attrs, insert_input_processing_level
+from ..utils.prov import echopype_prov_attrs
 from .freq_diff import _check_freq_diff_source_Sv, _parse_freq_diff_eq
 
 # for schoals detection
@@ -303,7 +303,6 @@ def _variable_prov_attrs(
     return attrs
 
 
-@add_processing_level("L3*")
 def apply_mask(
     source_ds: Union[xr.Dataset, str, pathlib.Path],
     mask: Union[xr.DataArray, str, pathlib.Path, List[Union[xr.DataArray, str, pathlib.Path]]],
@@ -459,7 +458,6 @@ def apply_mask(
     prov_dict = echopype_prov_attrs(process_type=process_type)
     prov_dict[f"{process_type}_function"] = "mask.apply_mask"
     output_ds = output_ds.assign_attrs(prov_dict)
-    output_ds = insert_input_processing_level(output_ds, input_ds=source_ds)
 
     return output_ds
 
