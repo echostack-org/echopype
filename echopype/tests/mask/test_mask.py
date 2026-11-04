@@ -1766,6 +1766,70 @@ def test_detect_basic_no_detection_defaults_to_bin_skip():
 
 
 @pytest.mark.unit
+def test_detect_basic_dask_input_stays_lazy():
+    ds = _make_ds_Sv_depth(
+        n_ping=6,
+        n_range=20,
+        channel="chan1",
+        dz=1.0,
+        var_name="Sv_corrected",
+    )
+    ds["Sv_corrected"][:, :, 12] = -35.0
+    ds = ds.chunk({"ping_time": 2, "range_sample": 5})
+
+    out = detect_seafloor(
+        ds,
+        method="basic",
+        params={
+            "var_name": "Sv_corrected",
+            "channel": "chan1",
+            "threshold": (-50.0, -20.0),
+            "offset_m": 0.3,
+            "bin_skip_from_surface": 2,
+        },
+    )
+
+    assert isinstance(out.data, dask.array.Array)
+    np.testing.assert_allclose(out.compute().values, np.full(6, 11.7), atol=1e-6)
+
+
+@pytest.mark.unit
+def test_detect_blackwell_dask_input_stays_lazy():
+    ds = _make_ds_Sv_depth(
+        n_ping=6,
+        n_range=20,
+        channel="chan1",
+        dz=1.0,
+        var_name="Sv_corrected",
+    )
+    ds["Sv_corrected"][:] = -120.0
+    ds["Sv_corrected"][:, :, 12] = -35.0
+    ds["angle_alongship"] = xr.full_like(ds["Sv_corrected"], 2.0)
+    ds["angle_athwartship"] = xr.zeros_like(ds["Sv_corrected"])
+
+    params = {
+        "var_name": "Sv_corrected",
+        "channel": "chan1",
+        "threshold": (-40.0, 1.0, 1.0),
+        "offset": 0.3,
+        "r0": 0,
+        "r1": 19,
+        "wtheta": 3,
+        "wphi": 3,
+    }
+    eager = detect_seafloor(ds, method="blackwell", params=params)
+    chunked = detect_seafloor(
+        ds.chunk({"ping_time": 2, "range_sample": 5}),
+        method="blackwell",
+        params=params,
+    )
+
+    assert isinstance(chunked.data, dask.array.Array)
+    np.testing.assert_allclose(chunked.compute().values, np.full(6, 11.7), atol=1e-6)
+    np.testing.assert_allclose(chunked.compute().values, eager.values, atol=1e-6)
+
+
+@pytest.mark.unit
 @pytest.mark.xfail(strict=False, reason="Method may not be implemented yet (#1522)")
 def test_detect_seafloor_unknown_method_raises():
     """Expect a ValueError for an unknown method (via dispatcher, if present)."""
