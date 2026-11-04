@@ -116,32 +116,3 @@ def get_mock_echodata(
     echodata._set_tree(tree)
     echodata._load_tree()
     return echodata
-
-
-def check_consolidated(echodata: EchoData, zmeta_path: Path) -> None:
-    """
-    Checks for the presence of `.zgroup`
-    for every group in echodata within the `.zmetadata`
-    file.
-
-    Parameters
-    ----------
-    echodata : EchoData
-        The echodata object to be checked.
-    zmeta_path : pathlib.Path
-        The path to the .zmetadata for the zarr file.
-    """
-    # Check that every group is in
-    # the zmetadata if consolidated
-    expected_zgroups = echodata.group_paths[1:]
-
-    with open(zmeta_path) as f:
-        meta_json = json.load(f)
-
-    file_groups = [
-        key for key, value in meta_json['consolidated_metadata']['metadata'].items()
-        if value.get('node_type') == 'group'
-    ]
-
-    for g in expected_zgroups:
-        assert g in file_groups, f"{g} not Found!"
