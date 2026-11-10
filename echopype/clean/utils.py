@@ -206,6 +206,9 @@ def downsample_upsample_along_depth(
         func="nanmean",
         skipna=True,
     ).pipe(_lin2log)
+    # flox returns the channels sorted, put them back in the order of `ds_Sv`
+    # since the loop below matches the two by position
+    downsampled_Sv = downsampled_Sv.sel(channel=ds_Sv["channel"].data)
 
     # Assign a depth bin index to each Sv depth value
     depth_bin_assignment = xr.DataArray(

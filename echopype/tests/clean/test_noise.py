@@ -12,6 +12,7 @@ from echopype.clean.utils import (
     downsample_upsample_along_depth,
 )
 from echopype.utils.compute import _lin2log, _log2lin
+from echopype.tests.mock_data import _gen_Sv_echo_range_regular
 
 @pytest.fixture
 def ek60_path(test_path):
@@ -675,6 +676,26 @@ def test_index_binning_downsample_upsample_along_depth(chunk, ek60_path):
                     atol=1e-10,
                     rtol=1e-10,
                 )
+
+
+def test_downsample_upsample_along_depth_channel_order():
+    """Channels that are not in sorted order keep their own values."""
+    ds_Sv = _gen_Sv_echo_range_regular(
+        channel_len=3,
+        depth_len=20,
+        ping_time_len=5,
+        random_number_generator=np.random.default_rng(0),
+    )
+    ds_Sv["depth"] = ds_Sv["echo_range"]
+    ds_Sv_reordered = ds_Sv.sel(channel=["ch_2", "ch_0", "ch_1"])
+
+    _, expected_upsampled_Sv = downsample_upsample_along_depth(ds_Sv, 2, "depth")
+    downsampled_Sv, upsampled_Sv = downsample_upsample_along_depth(ds_Sv_reordered, 2, "depth")
+
+    assert list(downsampled_Sv["channel"].data) == ["ch_2", "ch_0", "ch_1"]
+    xr.testing.assert_allclose(
+        upsampled_Sv, expected_upsampled_Sv.sel(channel=upsampled_Sv["channel"])
+    )
 
 
 @pytest.mark.integration

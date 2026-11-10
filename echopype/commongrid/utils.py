@@ -195,7 +195,7 @@ def compute_raw_NASC(
         expected_groups=(None, dist_interval, range_interval),
         isbin=[False, True, True],
         method=method,
-    )
+    ).sel(channel=ds_Sv["channel"].data)
     h_mean = h_mean_num / h_mean_denom
 
     # Combine to compute NASC and name it
@@ -624,7 +624,8 @@ def _groupby_x_along_channels(
         fill_value=fill_value,
         **flox_kwargs,
     )
-    return sv_mean
+    # flox returns the groups sorted, put them back in the order of the input
+    return sv_mean.sel({dim_0: ds_Sv[dim_0].data})
 
 
 def assign_actual_range(ds_MVBS: xr.Dataset) -> xr.Dataset:
