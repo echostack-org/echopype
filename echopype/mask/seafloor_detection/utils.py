@@ -1,7 +1,16 @@
+import dask.array as da
+import numpy as np
 import xarray as xr
+from dask import delayed
 
 
-def _check_inputs(ds: xr.Dataset, var_name: str, channel: str, required_vars: list[str] = None):
+def _check_inputs(
+    ds: xr.Dataset,
+    var_name: str,
+    channel: str,
+    required_vars: list[str] = None,
+    defer_depth_validation: bool = False,
+):
     """Validate dataset and select the reference channel for bottom detection."""
     if var_name not in ds:
         raise KeyError(f"{var_name!r} not found in dataset")
@@ -23,7 +32,17 @@ def _check_inputs(ds: xr.Dataset, var_name: str, channel: str, required_vars: li
     # Ensure uniform depth grid
     depth_ref = depth_sel.isel(ping_time=0)
     is_uniform = (abs(depth_sel - depth_ref).max(dim="range_sample") < 1e-16).all()
-    if not bool(is_uniform):
+    if defer_depth_validation and isinstance(is_uniform.data, da.Array):
+        validation = delayed(_validate_uniform_depth)(is_uniform.data)
+        depth_sel = depth_sel.copy(
+            data=da.asarray(depth_sel.data).map_blocks(
+                _validated_depth_block,
+                validation=validation,
+                dtype=depth_sel.dtype,
+                meta=np.array([], dtype=depth_sel.dtype),
+            )
+        )
+    elif not bool(is_uniform):
         raise ValueError("Depth grid varies across ping_time for the selected channel.")
 
     return Sv_sel, depth_sel
@@ -62,3 +81,14 @@ def _parse_blackwell_thresholds(threshold):
         raise TypeError("`threshold` must be float or tuple/list of 1–3 floats")
 
     return float(tSv), float(ttheta), float(tphi)
+
+
+def _validate_uniform_depth(is_uniform):
+    if not bool(is_uniform):
+        raise ValueError("Depth grid varies across ping_time for the selected channel.")
+    return True
+
+
+def _validated_depth_block(block, validation):
+    _validate_uniform_depth(validation)
+    return block
