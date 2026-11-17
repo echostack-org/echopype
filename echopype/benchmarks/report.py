@@ -98,8 +98,8 @@ def compare(root):
 
         plot(root, base_output, head_output, bm["output"], bm["dataset"])
 
-    print("\nMemory sampled separately every 20 ms.")
-    print("Task counts use the local scheduler; graph sizes are before optimization.")
+    print("\nRSS sampled separately every 20 ms: driver and local worker processes.")
+    print("Task counts use scheduler events; graph sizes are before optimization.")
 
     if errors:
         raise SystemExit("\n".join(errors))

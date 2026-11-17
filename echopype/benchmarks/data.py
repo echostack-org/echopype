@@ -10,4 +10,5 @@ def open_data(data_dir, dataset, n_files, chunks):
     n_pings = metadata["ping_boundaries"][n_files - 1]
 
     with xr.open_zarr(data_dir / f"{dataset}.zarr", chunks={}) as source:
-        yield source.isel(ping_time=slice(0, n_pings)).chunk(chunks)
+        ds = source.isel(ping_time=slice(0, n_pings))
+        yield ds.load() if chunks is None else ds.chunk(chunks)

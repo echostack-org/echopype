@@ -6,6 +6,7 @@ import dask
 import pytest
 import yaml
 from data import open_data
+from distributed import Client, LocalCluster
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -28,11 +29,24 @@ def scheduler(config):
             Path(os.environ["BENCHMARK_SOURCE"]).resolve() / "echopype/__init__.py"
         )
 
-    with dask.config.set(
-        scheduler=config["dask"]["scheduler"],
-        num_workers=config["dask"]["num_workers"],
-    ):
-        yield
+    settings = config["dask"]
+    if settings["scheduler"] == "distributed":
+        with (
+            LocalCluster(
+                n_workers=settings["num_workers"],
+                threads_per_worker=settings["threads_per_worker"],
+                memory_limit=settings["memory_limit"],
+                dashboard_address=None,
+            ) as cluster,
+            Client(cluster),
+        ):
+            yield
+    else:
+        with dask.config.set(
+            scheduler=settings["scheduler"],
+            num_workers=settings.get("num_workers", 1),
+        ):
+            yield
 
 
 @pytest.fixture
