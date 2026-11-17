@@ -1,0 +1,123 @@
+name: Method benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Reference branch or commit
+        default: main
+        required: true
+        type: string
+
+      head_ref:
+        description: Branch, commit or PR to benchmark
+        required: true
+        type: string
+
+      benchmark:
+        description: Benchmark file or directory
+        default: "."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    if: ${{ github.actor == 'LOCEANlloydizard' || github.actor == 'leewujung' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      BASE_REF: ${{ inputs.base_ref }}
+      HEAD_REF: ${{ inputs.head_ref }}
+      BENCHMARK: ${{ inputs.benchmark }}
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+      MPLBACKEND: Agg
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+
+    steps:
+      - uses: actions/checkout@v7
+        if: ${{ !env.ACT }}
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Prepare comparison
+        run: |
+          for ref in base head; do
+            target="$BASE_REF"
+            if [ "$ref" = head ]; then target="$HEAD_REF"; fi
+
+            if ! commit=$(git rev-parse --verify "$target^{commit}" 2>/dev/null); then
+              git fetch origin "$target"
+              commit=$(git rev-parse FETCH_HEAD)
+            fi
+
+            git clone --no-hardlinks "$GITHUB_WORKSPACE" "$RUNNER_TEMP/$ref"
+            git -C "$RUNNER_TEMP/$ref" fetch "$GITHUB_WORKSPACE" "$commit"
+            git -C "$RUNNER_TEMP/$ref" checkout --detach FETCH_HEAD
+          done
+
+          cp -R echopype/benchmarks "$RUNNER_TEMP/benchmarks"
+          mkdir -p "$RUNNER_TEMP/benchmark-results"
+
+          python -m pip install uv
+          UV_PROJECT_ENVIRONMENT="$RUNNER_TEMP/venv" uv sync --group benchmark-test --python "$(command -v python)"
+
+          echo "PYTHON=$RUNNER_TEMP/venv/bin/python" >> "$GITHUB_ENV"
+          echo "BENCHMARK_DATA=$RUNNER_TEMP/benchmark-results/data" >> "$GITHUB_ENV"
+          echo "RESULTS=$RUNNER_TEMP/benchmark-results" >> "$GITHUB_ENV"
+          echo "SUITE=$RUNNER_TEMP/benchmarks" >> "$GITHUB_ENV"
+
+          cp echopype/benchmarks/config.yaml "$RUNNER_TEMP/benchmark-results/"
+          lscpu > "$RUNNER_TEMP/benchmark-results/environment.txt"
+          free -h >> "$RUNNER_TEMP/benchmark-results/environment.txt"
+
+      - name: Prepare shared NOAA data
+        run: |
+          set -o pipefail
+          PYTHONPATH="$GITHUB_WORKSPACE" "$PYTHON" "$SUITE/prepare_data.py" "$BENCHMARK_DATA" | tee "$RESULTS/data-preparation.log"
+
+          uv pip freeze --python "$PYTHON" > "$RESULTS/dependencies.txt"
+          git -C "$RUNNER_TEMP/base" rev-parse HEAD > "$RESULTS/base-commit.txt"
+          git -C "$RUNNER_TEMP/head" rev-parse HEAD > "$RESULTS/head-commit.txt"
+          sha256sum "$BENCHMARK_DATA"/*.nc > "$RESULTS/input.sha256"
+
+      - name: Benchmark base and head
+        run: |
+          cd "$SUITE"
+          status=0
+
+          for ref in base head; do
+            source="$RUNNER_TEMP/$ref"
+
+            BENCHMARK_SOURCE="$source" BENCHMARK_OUTPUT="$RESULTS/$ref" \
+              PYTHONPATH="$source:$SUITE" "$PYTHON" -m pytest \
+              --confcutdir="$SUITE" -p pytest_benchmark.plugin \
+              --benchmark-only --benchmark-json="$RESULTS/$ref.json" \
+              -q -- "$BENCHMARK" || status=1
+          done
+
+          exit "$status"
+
+      - name: Compare results
+        run: |
+          set -o pipefail
+          "$PYTHON" "$SUITE/report.py" "$RESULTS" | tee "$RESULTS/summary.md"
+          cat "$RESULTS/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmarks
+          path: ${{ runner.temp }}/benchmark-results/

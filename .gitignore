@@ -44,3 +44,9 @@ echopype/test_data/*
 
 # Local uv lockfile
 uv.lock
+
+# Benchmark artifacts
+.act-artifacts/
+.benchmarks/
+benchmark-results/
+benchmark-results.json
