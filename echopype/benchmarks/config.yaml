@@ -1,12 +1,17 @@
 dask:
   scheduler: threads
   num_workers: 2
-  threads_per_worker: 1
-  memory_limit: 4GiB
+
+storage_chunks:
+  ping_time: 64
+  range_sample: 4096
 
 chunks:
   ping_time: 16
   range_sample: 4096
+
+scaling:
+  file_counts: [1]
 
 benchmark:
   rounds: 5

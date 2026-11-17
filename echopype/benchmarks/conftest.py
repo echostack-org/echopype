@@ -5,6 +5,7 @@ from pathlib import Path
 import dask
 import pytest
 import yaml
+from data import open_data
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -44,3 +45,16 @@ def output_dir():
 @pytest.fixture(scope="session")
 def data_dir():
     return Path(os.environ["BENCHMARK_DATA"])
+
+
+@pytest.fixture
+def dataset_loader(config, data_dir):
+    def load(name):
+        return open_data(
+            data_dir=data_dir,
+            dataset=name,
+            n_files=int(os.getenv("BENCHMARK_N_FILES", "1")),
+            chunks=config["chunks"],
+        )
+
+    return load

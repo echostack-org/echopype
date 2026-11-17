@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 SUITE = Path(__file__).resolve().parent
 REPO = SUITE.parent.parent
 
@@ -42,15 +44,27 @@ def checkout(ref, destination):
     return commit
 
 
-def run(base, head, benchmark, output):
+def run(base, head, benchmark, output, config_path=None):
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
 
     data = output / "data"
     suite = output / "suite"
 
+    config_path = Path(config_path or SUITE / "config.yaml").resolve()
+
+    config = yaml.safe_load(config_path.read_text())
+
+    file_counts = config["scaling"]["file_counts"]
     shutil.copytree(SUITE, suite)
-    shutil.copy(SUITE / "config.yaml", output)
+
+    for params in config["datasets"].values():
+        if "manifest" in params:
+            params["manifest"] = str((config_path.parent / params["manifest"]).resolve())
+
+    (suite / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False))
+
+    shutil.copy(suite / "config.yaml", output)
 
     env = {
         **os.environ,
@@ -88,10 +102,13 @@ def run(base, head, benchmark, output):
         )
 
     with (output / "input.sha256").open("w") as f:
-        for path in sorted(data.glob("*.nc")):
-            with path.open("rb") as dataset:
-                digest = hashlib.file_digest(dataset, "sha256").hexdigest()
-            f.write(f"{digest}  {path.name}\n")
+        for name in config["datasets"]:
+            paths = [data / f"{name}.json", *sorted((data / f"{name}.zarr").rglob("*"))]
+            for path in paths:
+                if path.is_file():
+                    with path.open("rb") as dataset:
+                        digest = hashlib.file_digest(dataset, "sha256").hexdigest()
+                    f.write(f"{digest}  {path.relative_to(data).as_posix()}\n")
 
     with (output / "dependencies.txt").open("w") as f:
         execute(
@@ -99,40 +116,58 @@ def run(base, head, benchmark, output):
             stdout=f,
         )
 
-    for name, source in sources.items():
-        print(f"Benchmarking {name}...", flush=True)
+    summaries = []
 
-        execute(
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                f"--confcutdir={suite}",
-                "-o",
-                "python_files=benchmark_*.py",
-                "-p",
-                "pytest_benchmark.plugin",
-                "--benchmark-only",
-                f"--benchmark-json={output / f'{name}.json'}",
-                "-q",
-                "--",
-                benchmark,
-            ],
-            cwd=suite,
-            env={
-                **env,
-                "BENCHMARK_SOURCE": str(source),
-                "BENCHMARK_OUTPUT": str(output / name),
-                "PYTHONPATH": os.pathsep.join([str(source), str(suite)]),
-            },
-        )
+    for n_files in file_counts:
+        case = output if len(file_counts) == 1 else output / f"{n_files}_files"
+        case.mkdir(parents=True, exist_ok=True)
 
-    with (output / "summary.md").open("w") as f:
-        execute(
-            [sys.executable, suite / "report.py", output],
-            env=env,
-            stdout=f,
-        )
+        if case != output:
+            shutil.copy(output / "config.yaml", case)
+
+        case_env = {**env, "BENCHMARK_N_FILES": str(n_files)}
+
+        for name, source in sources.items():
+            print(f"Benchmarking {name}: {n_files} RAW files...", flush=True)
+
+            execute(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    f"--confcutdir={suite}",
+                    "-o",
+                    "python_files=benchmark_*.py",
+                    "-o",
+                    "python_functions=benchmark_*",
+                    "-p",
+                    "pytest_benchmark.plugin",
+                    "--benchmark-only",
+                    f"--benchmark-json={case / f'{name}.json'}",
+                    "-q",
+                    "--",
+                    benchmark,
+                ],
+                cwd=suite,
+                env={
+                    **case_env,
+                    "BENCHMARK_SOURCE": str(source),
+                    "BENCHMARK_OUTPUT": str(case / name),
+                    "PYTHONPATH": os.pathsep.join([str(source), str(suite)]),
+                },
+            )
+
+        with (case / "summary.md").open("w") as f:
+            execute(
+                [sys.executable, suite / "report.py", case],
+                env=case_env,
+                stdout=f,
+            )
+
+        summaries.append(f"## {n_files} RAW files\n\n" + (case / "summary.md").read_text())
+
+    if len(file_counts) > 1:
+        (output / "summary.md").write_text("\n\n".join(summaries))
 
     print((output / "summary.md").read_text())
 
@@ -143,6 +178,14 @@ if __name__ == "__main__":
     parser.add_argument("--head", required=True)
     parser.add_argument("--benchmark", default=".")
     parser.add_argument("--output", default="benchmark-results")
+    parser.add_argument("--config", type=Path, default=SUITE / "config.yaml")
+
     args = parser.parse_args()
 
-    run(args.base, args.head, args.benchmark, args.output)
+    run(
+        args.base,
+        args.head,
+        args.benchmark,
+        args.output,
+        args.config,
+    )

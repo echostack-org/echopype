@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -6,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 import yaml
+from data import open_data
 
 
 def load(path):
@@ -16,7 +18,16 @@ def plot(root, base, head, filename, dataset):
     config = yaml.safe_load((root / "config.yaml").read_text())
     channel = config["datasets"][dataset]["channel"]
 
-    with xr.open_dataset(root / "data" / f"{dataset}.nc") as ds:
+    with open_data(
+        data_dir=Path(os.environ["BENCHMARK_DATA"]),
+        dataset=dataset,
+        n_files=int(os.getenv("BENCHMARK_N_FILES", "1")),
+        chunks={},
+    ) as ds:
+        ds = ds.isel(
+            ping_time=slice(None, None, max(1, (ds.sizes["ping_time"] + 999) // 1000)),
+            range_sample=slice(None, None, max(1, (ds.sizes["range_sample"] + 999) // 1000)),
+        )
         sv = ds.Sv.sel(channel=channel).transpose("ping_time", "range_sample")
         depth = ds.depth.sel(channel=channel).isel(ping_time=0)
         valid = np.isfinite(depth.values)
