@@ -44,6 +44,18 @@ def checkout(ref, destination):
     return commit
 
 
+def configurations(config):
+    if "profiles" not in config:
+        yield None, config
+        return
+
+    common = {k: v for k, v in config.items() if k not in ("profiles", "chunk_configs")}
+    for profile_name, profile in config["profiles"].items():
+        chunks = {"numpy": None} if profile_name == "numpy" else config["chunk_configs"]
+        for chunk_name, chunk in chunks.items():
+            yield f"{profile_name}_{chunk_name}", {**common, "dask": profile, "chunks": chunk}
+
+
 def run(base, head, benchmark, output, config_path=None):
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -117,59 +129,77 @@ def run(base, head, benchmark, output, config_path=None):
         )
 
     summaries = []
+    for profile_name, settings in configurations(config):
+        profile_dir = output / profile_name if profile_name else output
+        profile_dir.mkdir(exist_ok=True)
+        if profile_name:
+            print(f"Running {profile_name}", flush=True)
+        (suite / "config.yaml").write_text(yaml.safe_dump(settings, sort_keys=False))
+        shutil.copy(suite / "config.yaml", profile_dir)
+        profile_summaries = []
 
-    for n_files in file_counts:
-        case = output if len(file_counts) == 1 else output / f"{n_files}_files"
-        case.mkdir(parents=True, exist_ok=True)
+        for n_files in file_counts:
+            case = profile_dir if len(file_counts) == 1 else profile_dir / f"{n_files}_files"
+            case.mkdir(parents=True, exist_ok=True)
 
-        if case != output:
-            shutil.copy(output / "config.yaml", case)
+            if case != profile_dir:
+                shutil.copy(profile_dir / "config.yaml", case)
 
-        case_env = {**env, "BENCHMARK_N_FILES": str(n_files)}
+            case_env = {**env, "BENCHMARK_N_FILES": str(n_files)}
 
-        for name, source in sources.items():
-            print(f"Benchmarking {name}: {n_files} RAW files...", flush=True)
+            for name, source in sources.items():
+                print(f"Benchmarking {name}: {n_files} RAW files...", flush=True)
 
-            execute(
-                [
-                    sys.executable,
-                    "-m",
-                    "pytest",
-                    f"--confcutdir={suite}",
-                    "-o",
-                    "python_files=benchmark_*.py",
-                    "-o",
-                    "python_functions=benchmark_*",
-                    "-p",
-                    "pytest_benchmark.plugin",
-                    "--benchmark-only",
-                    f"--benchmark-json={case / f'{name}.json'}",
-                    "-q",
-                    "--",
-                    benchmark,
-                ],
-                cwd=suite,
-                env={
-                    **case_env,
-                    "BENCHMARK_SOURCE": str(source),
-                    "BENCHMARK_OUTPUT": str(case / name),
-                    "PYTHONPATH": os.pathsep.join([str(source), str(suite)]),
-                },
+                execute(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pytest",
+                        f"--confcutdir={suite}",
+                        "-o",
+                        "python_files=benchmark_*.py",
+                        "-o",
+                        "python_functions=benchmark_*",
+                        "-p",
+                        "pytest_benchmark.plugin",
+                        "--benchmark-only",
+                        f"--benchmark-json={case / f'{name}.json'}",
+                        "-q",
+                        "--",
+                        benchmark,
+                    ],
+                    cwd=suite,
+                    env={
+                        **case_env,
+                        "BENCHMARK_SOURCE": str(source),
+                        "BENCHMARK_OUTPUT": str(case / name),
+                        "PYTHONPATH": os.pathsep.join([str(source), str(suite)]),
+                    },
+                )
+
+            with (case / "summary.md").open("w") as f:
+                execute(
+                    [sys.executable, suite / "report.py", case],
+                    env=case_env,
+                    stdout=f,
+                )
+
+            profile_summaries.append(
+                f"## {n_files} RAW files\n\n" + (case / "summary.md").read_text()
             )
 
-        with (case / "summary.md").open("w") as f:
-            execute(
-                [sys.executable, suite / "report.py", case],
-                env=case_env,
-                stdout=f,
-            )
+        if len(file_counts) > 1:
+            (profile_dir / "summary.md").write_text("\n\n".join(profile_summaries))
+        if profile_name:
+            summaries.append(f"# {profile_name}\n\n" + (profile_dir / "summary.md").read_text())
 
-        summaries.append(f"## {n_files} RAW files\n\n" + (case / "summary.md").read_text())
-
-    if len(file_counts) > 1:
+    if summaries:
         (output / "summary.md").write_text("\n\n".join(summaries))
 
-    print((output / "summary.md").read_text())
+    if summaries:
+        print(f"Results: {output}")
+    else:
+        print((output / "summary.md").read_text())
 
 
 if __name__ == "__main__":
