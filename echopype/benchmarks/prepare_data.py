@@ -31,7 +31,6 @@ def prepare(output):
 
         ds = ds[["Sv", "depth", "angle_alongship", "angle_athwartship"]]
         ds = ds.sel(channel=[params["channel"]])
-        ds = ds.isel(ping_time=slice(0, params["n_pings"]))
         ds.to_netcdf(output / f"{name}.nc")
 
 

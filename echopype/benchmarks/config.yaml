@@ -22,4 +22,3 @@ datasets:
     encode_mode: power
     channel: WBT 400142-15 ES70-7C_ES
     depth_offset: 9.8
-    n_pings: 64
