@@ -25,6 +25,7 @@ permissions:
 
 jobs:
   benchmark:
+    if: ${{ github.actor == 'LOCEANlloydizard' || github.actor == 'leewujung' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
 

@@ -35,7 +35,7 @@ def plot(root, base, head, filename, dataset):
         ax.plot(head.ping_time, head, "w--", lw=1.5, label="Head")
         ax.invert_yaxis()
         ax.set(xlabel="Ping time", ylabel="Depth (m)", title=Path(filename).stem)
-        ax.legend()
+        ax.legend(loc="upper right")
         fig.colorbar(mesh, ax=ax, label="Sv (dB)")
         fig.savefig(root / Path(filename).with_suffix(".png"), dpi=150, bbox_inches="tight")
         plt.close(fig)
