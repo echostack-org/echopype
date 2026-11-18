@@ -40,7 +40,13 @@ echopype/test_data/*
 # Windows local test services
 /data/
 .ci_helpers/.state/
-.ci_helpers/minio.exe
+.ci_helpers/seaweedfs-*/
 
 # Local uv lockfile
 uv.lock
+
+# Benchmark artifacts
+.act-artifacts/
+.benchmarks/
+benchmark-results/
+benchmark-results.json
