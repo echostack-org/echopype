@@ -1,17 +1,13 @@
-import dask.array as da
 import xarray as xr
 
-from echopype.mask.seafloor_detection.utils import (
-    _check_inputs,
-    _validate_threshold,
-)
+from echopype.mask.seafloor_detection.utils import _get_bottom_depth, _validate_threshold
 
 
 def bottom_basic(
     ds: xr.Dataset,
     var_name: str,
     channel: str,
-    threshold: float = -50.0,
+    threshold: tuple[float, float] = (-40.0, -20.0),
     offset_m: float = 0.5,
     bin_skip_from_surface: int = 200,
 ) -> xr.DataArray:
@@ -31,19 +27,16 @@ def bottom_basic(
         Dataset containing:
           • `var_name` (Sv in dB), typically with dims
             (`channel`, `ping_time`, `range_sample`);
-          • a vertical coordinate (e.g., `depth`) aligned with `range_sample`.
+          • `depth` in meters, aligned with `ping_time` and `range_sample`.
     var_name : str
         Name of the Sv variable to use (e.g., `"Sv"`).
     channel : str
         Channel identifier to process (must match an entry in `ds['channel']`).
-    threshold : float or tuple(float, float), default -50.0
-        Sv threshold(s) in dB. If a single float is given, it is treated as the
-        lower bound and the upper bound is set to 10 dB above the lower
-        bound. If a 2-tuple `(tmin, tmax)` is provided, both the lower
-        and upper bounds are used directly.
+    threshold : tuple of float, default (-40.0, -20.0)
+        Lower and upper Sv thresholds (tmin, tmax) in dB.
     offset_m : float, default 0.5
         Meters subtracted from the detected crossing to place the bottom slightly
-        above the echo maximum.
+        above the detected threshold crossing.
     bin_skip_from_surface : int, default 200
         Number of shallow range bins to ignore before searching (index units,
         not meters).
@@ -57,32 +50,32 @@ def bottom_basic(
 
     Notes
     -----
-    * Depth lookup uses `depth.isel(ping_time=0, drop=True)` as the reference vector and
-      lazy Dask indexing when either the signal or depth is Dask-backed.
-    * For Dask-backed depth, uniform-grid validation runs when the result is computed.
-    * If no sample meets the threshold in a ping, `argmax` on a False-only
-      mask returns 0 (i.e., the first searched bin after the skipped region).
+    * Depth is retrieved from the corresponding depth profile of each ping.
+    * Supports NumPy and Dask-backed arrays, preserving lazy execution
+        for Dask-backed inputs.
+    * If no sample meets the threshold in a ping, NaN is returned.
     """
 
-    Sv_sel, depth_sel = _check_inputs(ds, var_name, channel, defer_depth_validation=True)
+    Sv_sel = ds[var_name].sel(channel=channel)
+    depth_sel = ds["depth"].sel(channel=channel)
     tmin, tmax = _validate_threshold(threshold)
 
-    depth_ref = depth_sel.isel(ping_time=0, drop=True)
+    # validate the search interval
+    if not 0 <= bin_skip_from_surface < Sv_sel.sizes["range_sample"]:
+        raise ValueError("bin_skip_from_surface must be within the range_sample dimension")
+
+    # ignore shallow range samples
     Sv_sliced = Sv_sel.isel(range_sample=slice(bin_skip_from_surface, None))
+    depth_sliced = depth_sel.isel(range_sample=slice(bin_skip_from_surface, None))
+
+    # threshold mask
     cond = (Sv_sliced > tmin) & (Sv_sliced < tmax)
 
-    # Find index of first match along range_sample
-    idx = cond.argmax(dim="range_sample") + bin_skip_from_surface  # add back skipped samples
+    # retrieve bottom depth
+    bottom_depth = _get_bottom_depth(depth_sliced, cond, offset_m)
 
-    # Dask take supports lazy indices without evaluating them during xarray indexing.
-    if isinstance(idx.data, da.Array) or isinstance(depth_ref.data, da.Array):
-        bottom_depth = da.take(da.asarray(depth_ref.data), idx.data) - float(offset_m)
-    else:
-        bottom_depth = depth_ref.isel(range_sample=idx).data - float(offset_m)
-
-    # Return 1D DataArray with attributes
     return xr.DataArray(
-        bottom_depth,
+        bottom_depth.data,
         dims=["ping_time"],
         coords={"ping_time": ds["ping_time"]},
         name="bottom_depth",

@@ -14,6 +14,7 @@ from flox.xarray import xarray_reduce
 # for seafloor detection
 from echopype.mask.seafloor_detection.bottom_basic import bottom_basic
 from echopype.mask.seafloor_detection.bottom_blackwell import bottom_blackwell
+from echopype.mask.seafloor_detection.utils import _check_inputs
 
 from ..commongrid.utils import (
     _convert_bins_to_interval_index,
@@ -281,7 +282,7 @@ def _variable_prov_attrs(
         if sys.version_info < (3, 11, 0)
         else f"{datetime.datetime.now(datetime.UTC)}. `depth` calculated using:"
     )
-    history_attr = f"{history_attr}. " "Created masked Sv dataarray."  # noqa
+    history_attr = f"{history_attr}. Created masked Sv dataarray."  # noqa
     attrs = {**attrs, **{"history": history_attr}}
 
     # Add attributes from the mask DataArray, if present
@@ -901,11 +902,8 @@ def detect_seafloor(
             Name of Sv variable (dB), e.g. ``"Sv"``.
         channel : str
             Channel identifier to select (e.g., ``"GPT  38 kHz ..."``).
-        threshold : float, default -50.0
-            Sv threshold(s) in dB. If a single float is given, it is treated as the
-            lower bound and the upper bound is set to 10 dB above the lower
-            bound. If a 2-tuple `(tmin, tmax)` is provided, both the lower and
-            upper bounds are used directly.
+        threshold : tuple of float, default (-40.0, -20.0)
+            Lower and upper Sv thresholds (tmin, tmax) in dB.
         offset_m : float, default 0.5
             Meters subtracted from the detected crossing.
         bin_skip_from_surface : int, default 200
@@ -919,7 +917,7 @@ def detect_seafloor(
         threshold : float | list | tuple, default -75
             Either a single Sv dB threshold (angle thresholds use defaults),
             or a 3-tuple/list ``(tSv_dB, ttheta, tphi)`` after angle smoothing.
-        offset : float, default 0.3
+        offset_m : float, default 0.3
             Meters subtracted from the detected bottom.
         r0 : float, default 0
             Shallow bound (m) of the detection range.
@@ -945,16 +943,26 @@ def detect_seafloor(
     --------
     >>> detect_seafloor(ds, "basic", {
     ...     "var_name": "Sv", "channel": "GPT  38 kHz ...",
-    ...     "threshold": -50, "offset_m": 0.5, "bin_skip_from_surface": 200
+    ...     "threshold": (-40.0, -20.0),
+    ...     "offset_m": 0.5, "bin_skip_from_surface": 200
     ... })
 
     >>> detect_seafloor(ds, "blackwell", {
-    ...     "channel": "GPT  38 kHz ...", "threshold": (-75, 0.02, 0.02),
-    ...     "offset": 0.3, "r0": 0, "r1": 600, "wtheta": 28, "wphi": 52
+    ...     "var_name": "Sv", "channel": "GPT  38 kHz ...",
+    ...     "threshold": (-75.0, 0.02, 0.02),
+    ...     "offset_m": 0.3, "r0": 0, "r1": 600,
+    ...     "wtheta": 28, "wphi": 52
     ... })
     """
     if method not in METHODS_BOTTOM:
         raise ValueError(f"Unsupported bottom detection method: {method}")
+
+    _check_inputs(
+        ds,
+        var_name=params["var_name"],
+        channel=params["channel"],
+        required_vars=(["angle_alongship", "angle_athwartship"] if method == "blackwell" else []),
+    )
 
     return METHODS_BOTTOM[method](ds, **params)
 
