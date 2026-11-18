@@ -6,13 +6,10 @@ from echopype.mask import detect_seafloor
 DATASET = "ek80_hake"
 
 
-def test_bottom_basic(benchmark, output_dir, config, data_dir):
+def benchmark_bottom_basic(benchmark, output_dir, config, dataset_loader):
     dataset = config["datasets"][DATASET]
 
-    with xr.open_dataset(
-        data_dir / f"{DATASET}.nc",
-        chunks=config["chunks"],
-    ) as ds:
+    with dataset_loader(DATASET) as ds:
 
         def call():
             return detect_seafloor(
@@ -28,6 +25,7 @@ def test_bottom_basic(benchmark, output_dir, config, data_dir):
             )
 
         observed, metrics = observe(call)
+
         result = benchmark.pedantic(
             lambda: call().compute(),
             **config["benchmark"],

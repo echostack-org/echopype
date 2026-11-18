@@ -1,18 +1,19 @@
 dask:
   scheduler: threads
   num_workers: 2
-  threads_per_worker: 1
-  memory_limit: 4GiB
-
+storage_chunks:
+  ping_time: 64
+  range_sample: 4096
 chunks:
   ping_time: 16
   range_sample: 4096
-
+scaling:
+  file_counts:
+  - 1
 benchmark:
   rounds: 5
   iterations: 1
   warmup_rounds: 1
-
 datasets:
   ek80_hake:
     url: https://noaa-wcsd-pds.s3.amazonaws.com/data/raw/Bell_M._Shimada/SH2306/EK80/Hake-D20230811-T165727.raw
@@ -22,4 +23,3 @@ datasets:
     encode_mode: power
     channel: WBT 400142-15 ES70-7C_ES
     depth_offset: 9.8
-    n_pings: 64
