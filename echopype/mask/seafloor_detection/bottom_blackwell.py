@@ -4,7 +4,6 @@ import numpy as np
 import scipy.ndimage as ndima
 import xarray as xr
 
-from echopype.mask.seafloor_detection.utils import _get_bottom_depth
 from echopype.utils.compute import _lin2log, _log2lin
 
 
@@ -22,14 +21,10 @@ def bottom_blackwell(
     """Detect the seafloor using the Blackwell method.
 
     Adapted from the Echopy implementation by Alejandro Ariza (2020),
-    based on Blackwell et al. (2019):
-    https://arxiv.org/abs/1904.10736
+    based on Blackwell et al. (2019): https://arxiv.org/abs/1904.10736
 
-    Uses smoothed split-beam angles, adaptive Sv thresholding,
-    and connected-component labeling to identify seafloor echoes.
-
-    Supports NumPy and Dask-backed inputs, but global connected-component
-    labeling requires eager computation.
+    Supports NumPy and Dask-backed inputs, with eager global
+    connected-component labeling.
     """
     tSv, ttheta, tphi = map(float, threshold)
 
@@ -39,7 +34,7 @@ def bottom_blackwell(
     theta = ds["angle_alongship"].sel(channel=channel).transpose("range_sample", "ping_time")
     phi = ds["angle_athwartship"].sel(channel=channel).transpose("range_sample", "ping_time")
 
-    # Determine search region using the reference depth profile
+    # Determine search region
     max_depth = depth.max(dim="range_sample", skipna=True)
     deepest_ping = int(max_depth.argmax(dim="ping_time").compute().item())
     depth_ref = depth.isel(ping_time=deepest_ping).values
@@ -47,7 +42,6 @@ def bottom_blackwell(
     r0_idx = np.nanargmin(abs(depth_ref - r0))
     r1_idx = np.nanargmin(abs(depth_ref - r1)) + 1
 
-    # Restrict processing to the search region
     search = slice(r0_idx, r1_idx)
 
     Sv = Sv.isel(range_sample=search)
@@ -58,11 +52,10 @@ def bottom_blackwell(
     # Smooth split-beam angles
     theta_mask = _smooth_angle(theta, wtheta) ** 2 > ttheta
     phi_mask = _smooth_angle(phi, wphi) ** 2 > tphi
-
     angle_mask = (theta_mask | phi_mask).compute()
 
     # Adaptive Sv threshold
-    selected_sv = _log2lin(Sv.data)[angle_mask.values]
+    selected_sv = _log2lin(Sv.data[angle_mask.values])
 
     if isinstance(selected_sv, da.Array):
         selected_sv = selected_sv.compute()
@@ -89,7 +82,6 @@ def bottom_blackwell(
 
         lookup = np.zeros(count + 1, dtype=bool)
         lookup[intercepted] = True
-
         mask_data = lookup[components]
 
     else:
@@ -102,7 +94,9 @@ def bottom_blackwell(
     )
 
     # Retrieve ping-dependent bottom depths
-    bottom_depth = _get_bottom_depth(depth, mask, offset_m)
+    idx = mask.argmax(dim="range_sample")
+    bottom_depth = depth.isel(range_sample=idx)
+    bottom_depth = bottom_depth.where(mask.any(dim="range_sample")) - offset_m
 
     return xr.DataArray(
         bottom_depth.data,
