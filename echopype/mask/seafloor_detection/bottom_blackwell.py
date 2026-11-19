@@ -24,8 +24,9 @@ def bottom_blackwell(
     intersect the smoothed angle mask. Retrieve the first detected depth
     per ping and subtract the offset.
 
-    Adapted from the Echopy implementation by Alejandro Ariza (2020),
-    based on Blackwell et al. (2019): https://arxiv.org/abs/1904.10736
+    Adapted from the ``blackwell`` function in ``mask_seabed.py``,
+    originally written by Alejandro Ariza for the Echopy library © 2020.
+    Based on Blackwell et al. (2019): https://arxiv.org/abs/1904.10736
 
     Supports NumPy and Dask-backed inputs, with eager computation for
     search-window selection, adaptive thresholding and connected-component
