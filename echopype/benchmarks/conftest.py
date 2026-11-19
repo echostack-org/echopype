@@ -1,12 +1,13 @@
 import os
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 import dask
 import pytest
 import yaml
 from data import open_data
-from distributed import Client, LocalCluster
+from distributed import Client, LocalCluster, wait
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -63,12 +64,21 @@ def data_dir():
 
 @pytest.fixture
 def dataset_loader(config, data_dir):
+    @contextmanager
     def load(name):
-        return open_data(
+        backend = config.get("backend", "dask")
+
+        with open_data(
             data_dir=data_dir,
             dataset=name,
             n_files=int(os.getenv("BENCHMARK_N_FILES", "1")),
-            chunks=config["chunks"],
-        )
+            chunks=None if backend == "numpy" else config["chunks"],
+        ) as ds:
+            if backend == "dask_memory":
+                ds = ds.persist()
+                if config["dask"]["scheduler"] == "distributed":
+                    wait(ds)
+
+            yield ds
 
     return load

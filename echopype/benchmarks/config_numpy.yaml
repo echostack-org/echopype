@@ -1,0 +1,31 @@
+# execution backend: numpy, dask_memory, or dask
+backend: numpy
+
+dask:
+  scheduler: threads
+  num_workers: 2
+
+storage_chunks:
+  ping_time: 64
+  range_sample: 4096
+
+chunks: null
+
+scaling:
+  file_counts:
+    - 1
+
+benchmark:
+  rounds: 5
+  iterations: 1
+  warmup_rounds: 1
+
+datasets:
+  ek80_hake:
+    url: https://noaa-wcsd-pds.s3.amazonaws.com/data/raw/Bell_M._Shimada/SH2306/EK80/Hake-D20230811-T165727.raw
+    sha256: dcc69f8a0cacc54a76ce3b598194bfb78b4580eb535ca19daf5b17e266ea5e52
+    sonar_model: EK80
+    waveform_mode: CW
+    encode_mode: power
+    channel: WBT 400142-15 ES70-7C_ES
+    depth_offset: 9.8
