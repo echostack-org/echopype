@@ -877,7 +877,11 @@ def detect_seafloor(
     params: Dict,
 ) -> xr.DataArray:
     """
-    Detect the seafloor using the selected method.
+    Dispatch seafloor detection to a chosen method and return a 1-D bottom line.
+
+    This function forwards ``ds`` and ``params`` to the selected implementation
+    (e.g., ``"basic"``, ``"blackwell"``). Any optional arguments omitted in
+    ``params`` are filled by that method's defaults.
 
     Parameters
     ----------
