@@ -19,7 +19,6 @@ def benchmark_bottom_blackwell(benchmark, output_dir, config, dataset_loader):
                     "var_name": "Sv",
                     "channel": dataset["channel"],
                     "threshold": (-40, 2.4, 1.0),
-                    "offset": 0.5,
                     "r0": 10,
                     "r1": 1000,
                 },

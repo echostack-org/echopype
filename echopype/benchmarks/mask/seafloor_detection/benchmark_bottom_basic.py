@@ -19,7 +19,6 @@ def benchmark_bottom_basic(benchmark, output_dir, config, dataset_loader):
                     "var_name": "Sv",
                     "channel": dataset["channel"],
                     "threshold": (-40, -20),
-                    "offset_m": 0.3,
                     "bin_skip_from_surface": 200,
                 },
             )

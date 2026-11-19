@@ -100,7 +100,7 @@ def run(base, head, benchmark, output, config_path=None):
         (output / f"{name}-commit.txt").write_text(commit + "\n")
 
     (output / "environment.txt").write_text(
-        f"{platform.platform()}\n" f"Logical CPUs: {os.cpu_count()}\n" f"Python: {sys.version}\n"
+        f"{platform.platform()}\nLogical CPUs: {os.cpu_count()}\nPython: {sys.version}\n"
     )
 
     print("Preparing shared data...", flush=True)

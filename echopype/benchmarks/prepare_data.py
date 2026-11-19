@@ -110,7 +110,6 @@ def prepare(output):
                 join="exact",
                 compat="equals",
             ) as combined:
-
                 index = combined.get_index("ping_time")
 
                 if not index.is_monotonic_increasing or not index.is_unique:
