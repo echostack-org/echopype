@@ -11,49 +11,14 @@ def bottom_basic(
     offset_m: float = 0.5,
     bin_skip_from_surface: int = 200,
 ) -> xr.DataArray:
-    """
-    Simple threshold-based seafloor detection returning a 1-D bottom line (depth).
+    """Detect the seafloor using Sv thresholds.
 
-    Summary
-    -------
-    For the selected `channel`, the algorithm skips the top `bin_skip_from_surface`
-    range bins, then finds (per ping) the first range sample where `Sv` is within a
-    user-defined dB interval. That depth (looked up from `depth`) minus `offset_m`
-    is returned as the bottom.
+    For each ping, identify the first range sample within the specified Sv
+    interval after skipping shallow samples. Retrieve its corresponding
+    depth and subtract the offset.
 
-    Parameters
-    ----------
-    ds : xr.Dataset
-        Dataset containing:
-          • `var_name` (Sv in dB), typically with dims
-            (`channel`, `ping_time`, `range_sample`);
-          • `depth` in meters, aligned with `ping_time` and `range_sample`.
-    var_name : str
-        Name of the Sv variable to use (e.g., `"Sv"`).
-    channel : str
-        Channel identifier to process (must match an entry in `ds['channel']`).
-    threshold : tuple of float, default (-40.0, -20.0)
-        Lower and upper Sv thresholds (tmin, tmax) in dB.
-    offset_m : float, default 0.5
-        Meters subtracted from the detected crossing to place the bottom slightly
-        above the detected threshold crossing.
-    bin_skip_from_surface : int, default 200
-        Number of shallow range bins to ignore before searching (index units,
-        not meters).
-
-    Returns
-    -------
-    xr.DataArray
-        1-D bottom depth per `ping_time` (no `channel` dimension) with attributes:
-        `detector='basic'`, `threshold_min`, `threshold_max`, `offset_m`,
-        `bin_skip_from_surface`, and `channel`.
-
-    Notes
-    -----
-    * Depth is retrieved from the corresponding depth profile of each ping.
-    * Supports NumPy and Dask-backed arrays, preserving lazy execution
-        for Dask-backed inputs.
-    * If no sample meets the threshold in a ping, NaN is returned.
+    Supports NumPy and Dask-backed inputs, preserving lazy computation.
+    Returns NaN for pings without a detection.
     """
 
     Sv_sel = ds[var_name].sel(channel=channel)

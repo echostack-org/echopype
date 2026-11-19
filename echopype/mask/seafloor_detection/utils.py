@@ -3,6 +3,7 @@ import xarray as xr
 
 
 def _check_inputs(ds, var_name, channel, required_vars=None):
+    """Validate the dataset variables and channel required for detection."""
     if var_name not in ds:
         raise KeyError(f"{var_name!r} not found in dataset")
 
@@ -45,27 +46,3 @@ def _validate_threshold(threshold):
         raise ValueError("threshold upper bound must be > lower bound")
 
     return tmin, tmax
-
-
-def _parse_blackwell_thresholds(threshold):
-    """
-    Parse threshold for Blackwell detection.
-
-    Returns
-    -------
-    tuple : (tSv, ttheta, tphi)
-        Thresholds for Sv (dB), angle_major, angle_minor.
-    """
-    if isinstance(threshold, (list, tuple)):
-        if len(threshold) == 3:
-            tSv, ttheta, tphi = threshold
-        elif len(threshold) == 2:
-            tSv, ttheta, tphi = threshold[0], 702, 282
-        else:
-            raise ValueError("`threshold` must have 1, 2, or 3 values")
-    elif isinstance(threshold, (int, float)):
-        tSv, ttheta, tphi = threshold, 702, 282
-    else:
-        raise TypeError("`threshold` must be float or tuple/list of 1–3 floats")
-
-    return float(tSv), float(ttheta), float(tphi)

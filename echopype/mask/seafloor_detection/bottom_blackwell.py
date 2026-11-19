@@ -18,13 +18,18 @@ def bottom_blackwell(
     wtheta: int = 28,
     wphi: int = 52,
 ) -> xr.DataArray:
-    """Detect the seafloor using the Blackwell method.
+    """Detect the seafloor using split-beam angles and Sv thresholding.
+
+    Identify connected regions of Sv above an adaptive threshold that
+    intersect the smoothed angle mask. Retrieve the first detected depth
+    per ping and subtract the offset.
 
     Adapted from the Echopy implementation by Alejandro Ariza (2020),
     based on Blackwell et al. (2019): https://arxiv.org/abs/1904.10736
 
-    Supports NumPy and Dask-backed inputs, with eager global
-    connected-component labeling.
+    Supports NumPy and Dask-backed inputs, with eager computation for
+    search-window selection, adaptive thresholding and connected-component
+    labeling. Returns NaN for pings without a detection.
     """
     tSv, ttheta, tphi = map(float, threshold)
 

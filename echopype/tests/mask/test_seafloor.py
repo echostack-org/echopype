@@ -245,6 +245,7 @@ def test_detect_blackwell_variable_depth(chunked):
 
     np.testing.assert_allclose(result.compute().values, expected)
 
+
 @pytest.mark.unit
 def test_detect_seafloor_unknown_method_raises():
     """Verify that an unsupported detection method raises ValueError."""
