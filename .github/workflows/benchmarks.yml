@@ -1,22 +1,30 @@
+
 name: Method benchmarks
 
 on:
   workflow_dispatch:
     inputs:
       base_ref:
-        description: Reference branch or commit
-        default: main
-        required: true
+        description: Optional reference branch or commit for comparison
+        default: ""
+        required: false
         type: string
 
       head_ref:
         description: Branch, commit or PR to benchmark
+        default: main
         required: true
         type: string
 
       benchmark:
         description: Benchmark file or directory
-        default: "."
+        default: mask/seafloor_detection/
+        required: true
+        type: string
+
+      config:
+        description: Benchmark configuration YAML
+        default: echopype/benchmarks/mask/seafloor_detection/config.yaml
         required: true
         type: string
 
@@ -33,6 +41,7 @@ jobs:
       BASE_REF: ${{ inputs.base_ref }}
       HEAD_REF: ${{ inputs.head_ref }}
       BENCHMARK: ${{ inputs.benchmark }}
+      CONFIG: ${{ inputs.config }}
 
     steps:
       - uses: actions/checkout@v7
@@ -53,11 +62,18 @@ jobs:
 
       - name: Run benchmarks
         run: |
-          "$RUNNER_TEMP/venv/bin/python" echopype/benchmarks/run.py \
-            --base "$BASE_REF" \
-            --head "$HEAD_REF" \
-            --benchmark "$BENCHMARK" \
+          ARGS=(
+            --head "$HEAD_REF"
+            --benchmark "$BENCHMARK"
+            --config "$CONFIG"
             --output "$RUNNER_TEMP/benchmark-results"
+          )
+
+          if [[ -n "$BASE_REF" ]]; then
+            ARGS+=(--base "$BASE_REF")
+          fi
+
+          "$RUNNER_TEMP/venv/bin/python" echopype/benchmarks/run.py "${ARGS[@]}"
 
       - name: Publish summary
         run: |

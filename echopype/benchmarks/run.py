@@ -50,20 +50,31 @@ def configurations(config):
         return
 
     common = {k: v for k, v in config.items() if k not in ("profiles", "chunk_configs")}
+
     for profile_name, profile in config["profiles"].items():
-        chunks = {"numpy": None} if profile_name == "numpy" else config["chunk_configs"]
+        backend = profile.get("backend", common.get("backend", "dask"))
+        chunks = {"numpy": None} if backend == "numpy" else config["chunk_configs"]
+
         for chunk_name, chunk in chunks.items():
-            yield f"{profile_name}_{chunk_name}", {**common, "dask": profile, "chunks": chunk}
+            yield (
+                f"{profile_name}_{chunk_name}",
+                {
+                    **common,
+                    "backend": backend,
+                    "dask": {k: v for k, v in profile.items() if k != "backend"},
+                    "chunks": chunk,
+                },
+            )
 
 
-def run(base, head, benchmark, output, config_path=None):
+def run(base, head, benchmark, output, config_path):
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
 
     data = output / "data"
     suite = output / "suite"
 
-    config_path = Path(config_path or SUITE / "config.yaml").resolve()
+    config_path = Path(config_path).resolve()
 
     config = yaml.safe_load(config_path.read_text())
 
@@ -91,7 +102,8 @@ def run(base, head, benchmark, output, config_path=None):
 
     sources = {}
 
-    for name, ref in {"base": base, "head": head}.items():
+    revisions = {"head": head} if base is None else {"base": base, "head": head}
+    for name, ref in revisions.items():
         source = output / "sources" / name
         source.parent.mkdir(exist_ok=True)
 
@@ -204,11 +216,11 @@ def run(base, head, benchmark, output, config_path=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base", default="main")
+    parser.add_argument("--base", help="Optional reference revision for comparison")
     parser.add_argument("--head", required=True)
     parser.add_argument("--benchmark", default=".")
     parser.add_argument("--output", default="benchmark-results")
-    parser.add_argument("--config", type=Path, default=SUITE / "config.yaml")
+    parser.add_argument("--config", type=Path, required=True)
 
     args = parser.parse_args()
 

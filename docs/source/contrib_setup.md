@@ -134,6 +134,50 @@ On Windows PowerShell:
 uv run python .ci_helpers/setup-services-windows.py stop
 ```
 
+(contrib:benchmarks)=
+## Benchmarking
+
+Echopype provides a benchmark runner in `echopype/benchmarks` to compare two code
+revisions on the same input data. Benchmarks complement unit tests by measuring
+execution time, memory use, Dask task counts, and output agreement.
+
+Install the benchmark dependencies from the repository root:
+
+```shell
+uv sync --group benchmark-test
+```
+
+Run a benchmark, for example:
+
+```shell
+uv run --no-sync python echopype/benchmarks/run.py \
+  --base main --head my-branch \
+  --benchmark mask/seafloor_detection/benchmark_bottom_basic.py \
+  --config echopype/benchmarks/mask/seafloor_detection/config.yaml \
+  --output benchmark-results/basic
+```
+
+The configuration controls the input backend (`numpy`, `dask_memory`, or `dask`),
+Dask scheduler, chunk sizes, benchmark repetitions, and number of RAW files.
+Computational chunks may differ from the storage chunks used to prepare the
+Zarr data. With multiple profiles and file counts in one configuration, the
+runner prepares the calibrated data once and reuses it across benchmark cases
+and both revisions.
+
+Results include timing summaries, resource metrics, plots, and numerical
+output comparisons. See the [Basic seafloor detection benchmark notebook](https://github.com/echostack-org/echopype-examples/tree/main/notebooks/benchmark/basic_seafloor) for a worked example and configuration options.
+
+The benchmark workflow in GitHub Actions can also be launched manually with a
+base revision, head revision, benchmark path, and configuration file.
+
+```{warning}
+Warning: Benchmark runs generate results and intermediate data in the specified `--output`
+directory, including prepared Zarr datasets and temporary repository checkouts.
+These files can consume substantial disk space, particularly when testing large
+datasets or running benchmarks repeatedly. Monitor available disk space and
+remove benchmark output directories when they are no longer needed.
+```
+
 ## pre-commit hooks
 
 The echopype development environment includes [pre-commit](https://pre-commit.com),

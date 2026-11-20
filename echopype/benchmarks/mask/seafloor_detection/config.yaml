@@ -1,21 +1,12 @@
-# execution backend: numpy, dask_memory, or dask
-backend: dask
 
-dask:
-  scheduler: threads
-  num_workers: 2
+# Seafloor detection benchmarks (Basic and Blackwell)
 
 storage_chunks:
   ping_time: 64
   range_sample: 4096
 
-chunks:
-  ping_time: 128
-  range_sample: 4096
-
 scaling:
-  file_counts:
-    - 1
+  file_counts: [1]
 
 benchmark:
   rounds: 5
@@ -31,3 +22,27 @@ datasets:
     encode_mode: power
     channel: WBT 400142-15 ES70-7C_ES
     depth_offset: 9.8
+
+profiles:
+  numpy:
+    backend: numpy
+    scheduler: synchronous
+
+  memory_threaded_2:
+    backend: dask_memory
+    scheduler: threads
+    num_workers: 2
+
+  zarr_threaded_2:
+    backend: dask
+    scheduler: threads
+    num_workers: 2
+
+chunk_configs:
+  medium:
+    ping_time: 128
+    range_sample: 4096
+
+  large:
+    ping_time: 256
+    range_sample: 16384

@@ -47,8 +47,9 @@ Therefore, we recommend breaking down the addition of a new function into 3 step
 1. Add the function following the guidelines in the above section
     - Ensure the function works with datasets of reasonable sizes (e.g., 100 MB)
     - Add tests for the new function in the testing suites (under `echopype/tests`)
-2. Benchmark function performance with different sizes of dataset and different chunking schemes, to determine if further optimization for scalability is needed
-    - Watch out for unexpected memory expansion in the computing steps - this can happen due to implicit broadcasting or padding operations
+2. Benchmark function performance with different dataset sizes and chunking schemes to determine if further optimization for scalability is needed (see {ref}`contrib:benchmarks`).
+    - Benchmarks are implemented in `echopype/benchmarks/`, organized by processing method.
+    - Watch out for unexpected memory expansion in the computing steps — this can happen due to implicit broadcasting or padding operations.
 3. Adjust the implementation to optimize the performance if necessary
 
 Most current Echopype processing functions are capable of leveraging lazy-loaded datasets for delayed computation, which may require additional tuning.
