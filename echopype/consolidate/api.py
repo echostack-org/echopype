@@ -15,7 +15,6 @@ from ..echodata import EchoData
 from ..echodata.simrad import retrieve_correct_beam_group
 from ..utils.align import align_to_ping_time
 from ..utils.io import get_file_format, open_source
-from ..utils.prov import add_processing_level
 from .ek_depth_utils import (
     ek_use_beam_angles,
     ek_use_platform_angles,
@@ -63,7 +62,6 @@ def swap_dims_channel_frequency(ds: Union[xr.Dataset, str, pathlib.Path]) -> xr.
         )
 
 
-@add_processing_level("L2A")
 def add_depth(
     ds: Union[xr.Dataset, str, pathlib.Path],
     echodata: Optional[Union[EchoData, str, pathlib.Path]] = None,
@@ -242,7 +240,6 @@ def add_depth(
     return ds
 
 
-@add_processing_level("L2A")
 def add_location(
     ds: Union[xr.Dataset, str, pathlib.Path],
     echodata: Union[EchoData, str, pathlib.Path],
