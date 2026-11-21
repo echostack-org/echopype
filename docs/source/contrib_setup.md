@@ -178,6 +178,19 @@ datasets or running benchmarks repeatedly. Monitor available disk space and
 remove benchmark output directories when they are no longer needed.
 ```
 
+### Backend and chunk-size considerations
+
+Benchmark performance depends on dataset size, storage layout, computation chunks, and the selected backend.
+NumPy can outperform Dask when data fit comfortably in memory, while Dask enables lazy and parallel computation for larger datasets.
+When configuring Dask benchmarks:
+
+- **Chunk size:** Choose chunks large enough to limit scheduling overhead, but small enough to fit multiple chunks in memory.
+- **Storage alignment:** Prefer computation chunks that are multiples of the underlying Zarr storage chunks to avoid inefficient reads.
+- **Benchmarking:** Compare multiple chunk configurations rather than assuming that larger chunks are always faster.
+- **Rechunking:** Xarray's `Dataset.chunk()` allows adjusting Dask chunk sizes throughout a workflow to optimize different operations (e.g., temporal aggregation or reductions along specific dimensions). While rechunking introduces computational and memory overhead, adapting chunk sizes to each processing step can improve overall performance.
+
+For further recommendations, see [Dask Array Best Practices](https://docs.dask.org/en/stable/array-best-practices.html) and [Xarray Chunking and Performance](https://docs.xarray.dev/en/stable/user-guide/dask.html#chunking-and-performance).
+
 ## pre-commit hooks
 
 The echopype development environment includes [pre-commit](https://pre-commit.com),
