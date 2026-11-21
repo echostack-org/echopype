@@ -67,11 +67,11 @@ def configurations(config):
             )
 
 
-def run(base, head, benchmark, output, config_path):
+def run(base, head, benchmark, output, config_path, data_dir=None):
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
 
-    data = output / "data"
+    data = Path(data_dir).resolve() if data_dir else output / "data"
     suite = output / "suite"
 
     config_path = Path(config_path).resolve()
@@ -115,15 +115,23 @@ def run(base, head, benchmark, output, config_path):
         f"{platform.platform()}\nLogical CPUs: {os.cpu_count()}\nPython: {sys.version}\n"
     )
 
-    print("Preparing shared data...", flush=True)
+    if data_dir is None:
+        print("Preparing shared data...", flush=True)
 
-    with (output / "data-preparation.log").open("w") as log:
-        execute(
-            [sys.executable, suite / "prepare_data.py", data],
-            env={**env, "PYTHONPATH": str(REPO)},
-            stdout=log,
-            stderr=subprocess.STDOUT,
-        )
+        with (output / "data-preparation.log").open("w") as log:
+            execute(
+                [sys.executable, suite / "prepare_data.py", data],
+                env={**env, "PYTHONPATH": str(REPO)},
+                stdout=log,
+                stderr=subprocess.STDOUT,
+            )
+    else:
+        for name in config["datasets"]:
+            for path in (data / f"{name}.zarr", data / f"{name}.json"):
+                if not path.exists():
+                    raise FileNotFoundError(f"Prepared data not found: {path}")
+
+        print(f"Reusing prepared data: {data}", flush=True)
 
     with (output / "input.sha256").open("w") as f:
         for name in config["datasets"]:
@@ -221,6 +229,12 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", default=".")
     parser.add_argument("--output", default="benchmark-results")
     parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument(
+        "--data-dir",
+        type=Path,
+        default=None,
+        help="Directory containing previously prepared benchmark data",
+    )
 
     args = parser.parse_args()
 
@@ -230,4 +244,5 @@ if __name__ == "__main__":
         args.benchmark,
         args.output,
         args.config,
+        args.data_dir,
     )
