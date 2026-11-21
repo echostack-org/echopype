@@ -42,7 +42,8 @@ def plot(root, base, head, filename, dataset):
             vmin=-90,
             vmax=-30,
         )
-        ax.plot(base.ping_time, base, "k-", lw=2, label="Base")
+        if base is not None:
+            ax.plot(base.ping_time, base, "k-", lw=2, label="Base")
         ax.plot(head.ping_time, head, "w--", lw=1.5, label="Head")
         ax.invert_yaxis()
         ax.set(xlabel="Ping time", ylabel="Depth (m)", title=Path(filename).stem)
@@ -50,6 +51,34 @@ def plot(root, base, head, filename, dataset):
         fig.colorbar(mesh, ax=ax, label="Sv (dB)")
         fig.savefig(root / Path(filename).with_suffix(".png"), dpi=150, bbox_inches="tight")
         plt.close(fig)
+
+
+def single(root):
+    head = load(root / "head.json")
+    assert head, "No benchmark cases found"
+
+    print("| Case | Metric | Head |")
+    print("|---|---|---:|")
+
+    for case, result in head.items():
+        info = result["extra_info"]
+
+        for key in ("median", "min", "max"):
+            print(f"| {case} | {key} (s) | {result['stats'][key]:.4f} |")
+
+        for key, value in info.items():
+            if key in ("output", "dataset"):
+                continue
+            if key.endswith("_bytes"):
+                print(f"| {case} | {key.replace('_bytes', ' (MiB)')} | {value / 2**20:.1f} |")
+            else:
+                print(f"| {case} | {key} | {value} |")
+
+        output = xr.load_dataarray(root / "head" / info["output"])
+        plot(root, None, output, info["output"], info["dataset"])
+
+    print("\nRSS sampled separately every 20 ms: driver and local worker processes.")
+    print("Task counts use scheduler events; graph sizes are before optimization.")
 
 
 def compare(root):
@@ -106,4 +135,8 @@ def compare(root):
 
 
 if __name__ == "__main__":
-    compare(Path(sys.argv[1]))
+    root = Path(sys.argv[1])
+    if (root / "base.json").exists():
+        compare(root)
+    else:
+        single(root)
