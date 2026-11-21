@@ -14,6 +14,7 @@ from flox.xarray import xarray_reduce
 # for seafloor detection
 from echopype.mask.seafloor_detection.bottom_basic import bottom_basic
 from echopype.mask.seafloor_detection.bottom_blackwell import bottom_blackwell
+from echopype.mask.seafloor_detection.utils import _check_inputs
 
 from ..commongrid.utils import (
     _convert_bins_to_interval_index,
@@ -281,7 +282,7 @@ def _variable_prov_attrs(
         if sys.version_info < (3, 11, 0)
         else f"{datetime.datetime.now(datetime.UTC)}. `depth` calculated using:"
     )
-    history_attr = f"{history_attr}. " "Created masked Sv dataarray."  # noqa
+    history_attr = f"{history_attr}. Created masked Sv dataarray."  # noqa
     attrs = {**attrs, **{"history": history_attr}}
 
     # Add attributes from the mask DataArray, if present
@@ -885,76 +886,108 @@ def detect_seafloor(
     Parameters
     ----------
     ds : xr.Dataset
-        Dataset containing calibrated Sv and required coordinates (at minimum
-        ``ping_time`` and a vertical coordinate such as ``depth``), plus any
-        extra variables required by the chosen method.
+        Dataset containing calibrated Sv and depth (m), with dimensions
+        ``channel``, ``ping_time`` and ``range_sample``.
+        The Blackwell method additionally requires ``angle_alongship``
+        and ``angle_athwartship``.
     method : str
-        Name of the detection method to use. Supported:
-          - ``"basic"``  → threshold-only detector
-          - ``"blackwell"`` → Sv + split-beam angle detector
+        Detection method:
+          - ``"basic"``: Sv threshold-based detection.
+          - ``"blackwell"``: Sv and split-beam angle-based detection.
     params : dict
-        Method-specific keyword arguments (see below). Unspecified keys use
-        the method's defaults.
+        Method-specific keyword arguments (see below).
+        ``var_name`` and ``channel`` are required for both methods.
+        Other parameters use the method's defaults when omitted.
 
     When method == "basic", params can contain:
         var_name : str
-            Name of Sv variable (dB), e.g. ``"Sv"``.
+            Name of the variable (dB), e.g. ``"Sv"``.
         channel : str
-            Channel identifier to select (e.g., ``"GPT  38 kHz ..."``).
-        threshold : float, default -50.0
-            Sv threshold(s) in dB. If a single float is given, it is treated as the
-            lower bound and the upper bound is set to 10 dB above the lower
-            bound. If a 2-tuple `(tmin, tmax)` is provided, both the lower and
-            upper bounds are used directly.
+            Channel identifier to select.
+        threshold : tuple of float, default (-40.0, -20.0)
+            Lower and upper Sv thresholds (tmin, tmax) in dB.
         offset_m : float, default 0.5
-            Meters subtracted from the detected crossing.
+            Distance (m) subtracted from the detected depth.
         bin_skip_from_surface : int, default 200
-            Number of shallow range bins to ignore before searching.
+            Number of shallow range samples to ignore before searching.
 
     When method == "blackwell", params can contain:
         var_name : str
-            Name of the Sv variable to use (e.g., ``"Sv"``).
+            Name of the Sv variable (dB), e.g. ``"Sv"``.
         channel : str
             Channel identifier to select.
-        threshold : float | list | tuple, default -75
-            Either a single Sv dB threshold (angle thresholds use defaults),
-            or a 3-tuple/list ``(tSv_dB, ttheta, tphi)`` after angle smoothing.
-        offset : float, default 0.3
-            Meters subtracted from the detected bottom.
+        threshold : tuple of float, default (-75.0, 702.0, 282.0)
+            Minimum Sv threshold (dB) and thresholds for the squared,
+            smoothed along-ship and athwart-ship angles.
+        offset_m : float, default 0.3
+            Distance (m) subtracted from the detected depth.
         r0 : float, default 0
             Shallow bound (m) of the detection range.
         r1 : float, default 500
             Deep bound (m) of the detection range.
         wtheta : int, default 28
-            Square smoothing window (pixels) for along-ship angle.
+            Side length of the square smoothing window (samples)
+            for the along-ship angle.
         wphi : int, default 52
-            Square smoothing window (pixels) for athwart-ship angle.
+            Side length of the square smoothing window (samples)
+            for the athwart-ship angle.
 
     Returns
     -------
     xr.DataArray
-        1-D bottom depth per ``ping_time`` (no ``channel`` dimension). The
-        output name and attributes are set by the called method.
+        Bottom depth (m) per ``ping_time``, named ``bottom_depth``.
+        Pings without a detection are assigned NaN.
 
     Raises
     ------
     ValueError
-        If ``method`` is not supported.
+        If the method is unsupported, the channel is missing or
+        the Basic detection parameters are invalid.
+    KeyError
+        If required dataset variables or parameters are missing.
+
+    Notes
+    -----
+    Both methods support ping-dependent depth grids and NumPy or
+    Dask-backed inputs.
+
+    Basic preserves lazy computation with Dask-backed inputs.
+    Blackwell requires eager computation for search-window selection,
+    adaptive thresholding and connected-component labeling.
+    Its search window is defined using the depth profile of the
+    ping with the greatest maximum depth.
 
     Examples
     --------
     >>> detect_seafloor(ds, "basic", {
-    ...     "var_name": "Sv", "channel": "GPT  38 kHz ...",
-    ...     "threshold": -50, "offset_m": 0.5, "bin_skip_from_surface": 200
+    ...     "var_name": "Sv",
+    ...     "channel": "GPT  38 kHz ...",
+    ...     "threshold": (-40.0, -20.0),
+    ...     "offset_m": 0.5,
+    ...     "bin_skip_from_surface": 200
     ... })
 
     >>> detect_seafloor(ds, "blackwell", {
-    ...     "channel": "GPT  38 kHz ...", "threshold": (-75, 0.02, 0.02),
-    ...     "offset": 0.3, "r0": 0, "r1": 600, "wtheta": 28, "wphi": 52
+    ...     "var_name": "Sv",
+    ...     "channel": "GPT  38 kHz ...",
+    ...     "threshold": (-75.0, 702.0, 282.0),
+    ...     "offset_m": 0.3,
+    ...     "r0": 0,
+    ...     "r1": 500,
+    ...     "wtheta": 28,
+    ...     "wphi": 52
     ... })
     """
+
     if method not in METHODS_BOTTOM:
         raise ValueError(f"Unsupported bottom detection method: {method}")
+
+    _check_inputs(
+        ds,
+        var_name=params["var_name"],
+        channel=params["channel"],
+        required_vars=(["angle_alongship", "angle_athwartship"] if method == "blackwell" else []),
+    )
 
     return METHODS_BOTTOM[method](ds, **params)
 

@@ -1,8 +1,9 @@
+import dask.array as da
+import dask_image.ndfilters as dask_ndfilters
 import numpy as np
 import scipy.ndimage as ndima
 import xarray as xr
 
-from echopype.mask.seafloor_detection.utils import _check_inputs, _parse_blackwell_thresholds
 from echopype.utils.compute import _lin2log, _log2lin
 
 
@@ -10,181 +11,128 @@ def bottom_blackwell(
     ds: xr.Dataset,
     var_name: str,
     channel: str,
-    threshold: float | list | tuple = -75,
-    offset: float = 0.3,
+    threshold: tuple[float, float, float] = (-75.0, 702.0, 282.0),
+    offset_m: float = 0.3,
     r0: float = 0,
     r1: float = 500,
     wtheta: int = 28,
     wphi: int = 52,
 ) -> xr.DataArray:
+    """Detect the seafloor using split-beam angles and Sv thresholding.
+
+    Identify connected regions of Sv above an adaptive threshold that
+    intersect the smoothed angle mask. Retrieve the first detected depth
+    per ping and subtract the offset.
+
+    Adapted from the ``blackwell`` function in ``mask_seabed.py``,
+    originally written by Alejandro Ariza for the Echopy library © 2020.
+    Based on Blackwell et al. (2019): https://arxiv.org/abs/1904.10736
+
+    Supports NumPy and Dask-backed inputs, with eager computation for
+    search-window selection, adaptive thresholding and connected-component
+    labeling. Returns NaN for pings without a detection.
     """
-     Shoal detector modified from the "blackwell" function
-     in `mask_seabed.py`, originally written by
-     Alejandro ARIZA for the Echopy library © 2020.
+    tSv, ttheta, tphi = map(float, threshold)
 
-     Based on: "Blackwell et al (2019), Aliased seabed detection in fisheries acoustic
-     data". (https://arxiv.org/abs/1904.10736)
+    # Select channel
+    Sv = ds[var_name].sel(channel=channel).transpose("range_sample", "ping_time")
+    depth = ds["depth"].sel(channel=channel).transpose("range_sample", "ping_time")
+    theta = ds["angle_alongship"].sel(channel=channel).transpose("range_sample", "ping_time")
+    phi = ds["angle_athwartship"].sel(channel=channel).transpose("range_sample", "ping_time")
 
-     Overview
-     ---------
-     1) Range crop: restrict processing to r ∈ [r0, r1].
+    # Determine search region
+    max_depth = depth.max(dim="range_sample", skipna=True)
+    deepest_ping = int(max_depth.argmax(dim="ping_time").compute().item())
+    depth_ref = depth.isel(ping_time=deepest_ping).values
 
-     2) Angle smoothing: convolve along-ship (θ) and athwart-ship (ϕ) angles
-         with square kernels of size wtheta and wphi (mean filters).
+    r0_idx = np.nanargmin(abs(depth_ref - r0))
+    r1_idx = np.nanargmin(abs(depth_ref - r1)) + 1
 
-     3) Angle activity mask: flag pixels where the smoothed angles’ squared values
-         exceed thresholds (θ > ttheta or ϕ > tphi), then take the union.
-    4) Adaptive Sv threshold: compute the median Sv over the angle mask in linear
-         units (then convert to dB), set it to tSv if lower, and threshold Sv > Sv_median.
+    search = slice(r0_idx, r1_idx)
 
-     5) Connected components: label Sv above threshold patches and keep only those
-         intersecting the angle mask.
+    Sv = Sv.isel(range_sample=search)
+    depth = depth.isel(range_sample=search)
+    theta = theta.isel(range_sample=search)
+    phi = phi.isel(range_sample=search)
 
-     6) Bottom pick: for each ping, take the shallowest range of the kept patch and
-         subtract an `offset` (m) to place the bottom line slightly above it.
+    # Smooth split-beam angles
+    theta_mask = _smooth_angle(theta, wtheta) ** 2 > ttheta
+    phi_mask = _smooth_angle(phi, wphi) ** 2 > tphi
+    angle_mask = (theta_mask | phi_mask).compute()
 
-     Parameters
-     ----------
-     ds : xr.Dataset
-         Dataset containing:
-           • ``var_name`` (Sv in dB) with dims typically
-             (``channel``, ``ping_time``, ``range_sample``),
-           • ``angle_alongship`` and ``angle_athwartship`` with compatible dims,
-           • a vertical coordinate (e.g., ``depth``) aligned with ``range_sample``.
-     var_name : str
-         Name of the Sv variable to use (e.g., ``"Sv"``).
-     channel : str
-         Channel identifier to process (must match an entry in ``ds['channel']``).
-     threshold : float | list | tuple, default -75
-         Either a single Sv threshold in dB (angle thresholds use defaults), or a
-         3-tuple/list ``(tSv_dB, ttheta, tphi)`` where ``ttheta`` and ``tphi`` are
-         post-smoothing angle activity thresholds (same units as the squared,
-         smoothed angles in your pipeline).
-     offset : float, default 0.3
-         Meters subtracted from the detected range to place the bottom line slightly
-         above the echo maximum.
-     r0, r1 : float, default 0, 500
-         Shallow and deep bounds (meters) of the search interval.
-     wtheta, wphi : int, default 28, 52
-         Side length (pixels) of the square smoothing windows for the along-ship
-         and athwart-ship angle fields.
+    # Adaptive Sv threshold
+    selected_sv = _log2lin(Sv.data[angle_mask.values])
 
-     Returns
-     -------
-     xr.DataArray
-         1-D bottom depth per ``ping_time`` with attributes:
-         ``detector='blackwell'``, ``threshold_Sv``, ``threshold_angle_major``,
-         ``threshold_angle_minor``, ``offset_m``, and ``channel``.
-    """
+    if isinstance(selected_sv, da.Array):
+        selected_sv = selected_sv.compute()
 
-    # Validate input variables and structure
-    Sv_sel, depth_sel = _check_inputs(
-        ds,
-        var_name=var_name,
-        channel=channel,
-        required_vars=["angle_alongship", "angle_athwartship"],
-    )
+    selected_sv = selected_sv[np.isfinite(selected_sv)]
 
-    # parse thresholds
-    tSv, ttheta, tphi = _parse_blackwell_thresholds(threshold)
-
-    # Direct selection without using ch_sel
-    theta = ds["angle_alongship"].sel(channel=channel)
-    phi = ds["angle_athwartship"].sel(channel=channel)
-
-    # to match with blackwell echopy format
-    Sv_sel = Sv_sel.transpose("range_sample", "ping_time")
-    theta = theta.transpose("range_sample", "ping_time")
-    phi = phi.transpose("range_sample", "ping_time")
-
-    ping_time = Sv_sel.coords["ping_time"]
-
-    # Use the ping with the deepest valid depth instead of assuming ping_time=0
-    max_depth_per_ping = depth_sel.max(dim="range_sample", skipna=True)
-    deepest_ping_idx = int(max_depth_per_ping.argmax(dim="ping_time").values)
-
-    r = depth_sel.isel(ping_time=deepest_ping_idx).values
-
-    # Define core detection range
-    r0_idx = np.nanargmin(abs(r - r0))
-    r1_idx = np.nanargmin(abs(r - r1)) + 1
-
-    Svchunk = Sv_sel[r0_idx:r1_idx, :]
-    thetachunk = theta[r0_idx:r1_idx, :]
-    phichunk = phi[r0_idx:r1_idx, :]
-
-    # Angle masks
-    thetamaskchunk = (
-        ndima.uniform_filter(
-            thetachunk,
-            size=wtheta,
-            mode="reflect",
+    if selected_sv.size:
+        median_sv = max(
+            float(_lin2log(np.median(selected_sv))),
+            tSv,
         )
-        ** 2
-        > ttheta
-    )
-
-    phimaskchunk = (
-        ndima.uniform_filter(
-            phichunk,
-            size=wphi,
-            mode="reflect",
-        )
-        ** 2
-        > tphi
-    )
-    anglemaskchunk = thetamaskchunk | phimaskchunk
-
-    # Apply Blackwell algorithm
-    if anglemaskchunk.any():
-
-        Svmedian_anglemasked = float(
-            _lin2log(np.nanmedian(_log2lin(Svchunk.values[anglemaskchunk])))
-        )
-
-        if np.isnan(Svmedian_anglemasked):
-            Svmedian_anglemasked = np.inf
-        if Svmedian_anglemasked < tSv:
-            Svmedian_anglemasked = tSv
-
-        Svmaskchunk = Svchunk > Svmedian_anglemasked
 
         # Connected components
-        items = ndima.label(Svmaskchunk, ndima.generate_binary_structure(2, 2))[0]
-        intercepted = list(set(items[anglemaskchunk]))
-        if 0 in intercepted:
-            intercepted.remove(0)
+        sv_mask = (Sv > median_sv).compute()
 
-        # Combine intercepted items
-        maskchunk = np.zeros(Svchunk.shape, dtype=bool)
-        for i in intercepted:
-            maskchunk |= items == i
+        components, count = ndima.label(
+            sv_mask.values,
+            structure=ndima.generate_binary_structure(2, 2),
+        )
 
-        # Add padding
-        above = np.zeros((r0_idx, maskchunk.shape[1]), dtype=bool)
-        below = np.zeros((len(r) - r1_idx, maskchunk.shape[1]), dtype=bool)
+        # Retain components intersecting the angle mask
+        intercepted = np.unique(components[angle_mask.values])
+        intercepted = intercepted[intercepted != 0]
 
-        mask = np.r_[above, maskchunk, below]
+        lookup = np.zeros(count + 1, dtype=bool)
+        lookup[intercepted] = True
+        mask_data = lookup[components]
 
     else:
-        mask = np.zeros_like(Sv_sel, dtype=bool)
+        mask_data = np.zeros(Sv.shape, dtype=bool)
 
-    # Bottom detection from mask - offset
-    bottom_sample_idx = mask.argmax(axis=0)
-    bottom_depth = r[bottom_sample_idx] - offset
+    mask = xr.DataArray(
+        mask_data,
+        dims=Sv.dims,
+        coords=Sv.coords,
+    )
 
-    # Return 1D DataArray with attributes
+    # Retrieve ping-dependent bottom depths
+    idx = mask.argmax(dim="range_sample")
+    bottom_depth = depth.isel(range_sample=idx)
+    bottom_depth = bottom_depth.where(mask.any(dim="range_sample")) - offset_m
+
     return xr.DataArray(
-        bottom_depth,
+        bottom_depth.data,
         dims=["ping_time"],
-        coords={"ping_time": ping_time},
+        coords={"ping_time": ds["ping_time"]},
         name="bottom_depth",
         attrs={
             "detector": "blackwell",
-            "threshold_Sv": float(tSv),
-            "threshold_angle_major": float(ttheta),
-            "threshold_angle_minor": float(tphi),
-            "offset_m": float(offset),
-            "channel": channel,
+            "threshold_Sv": tSv,
+            "threshold_angle_major": ttheta,
+            "threshold_angle_minor": tphi,
+            "offset_m": float(offset_m),
+            "channel": str(channel),
         },
     )
+
+
+def _smooth_angle(angle, window):
+    """Apply a uniform filter using the underlying array backend."""
+    if isinstance(angle.data, da.Array):
+        filtered = dask_ndfilters.uniform_filter(
+            angle.data,
+            size=window,
+            mode="reflect",
+        )
+    else:
+        filtered = ndima.uniform_filter(
+            angle.data,
+            size=window,
+            mode="reflect",
+        )
+
+    return angle.copy(data=filtered)
