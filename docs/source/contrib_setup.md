@@ -134,6 +134,63 @@ On Windows PowerShell:
 uv run python .ci_helpers/setup-services-windows.py stop
 ```
 
+(contrib:benchmarks)=
+## Benchmarking
+
+Echopype provides a benchmark runner in `echopype/benchmarks` to compare two code
+revisions on the same input data. Benchmarks complement unit tests by measuring
+execution time, memory use, Dask task counts, and output agreement.
+
+Install the benchmark dependencies from the repository root:
+
+```shell
+uv sync --group benchmark-test
+```
+
+Run a benchmark, for example:
+
+```shell
+uv run --no-sync python echopype/benchmarks/run.py \
+  --base main --head my-branch \
+  --benchmark mask/seafloor_detection/benchmark_bottom_basic.py \
+  --config echopype/benchmarks/mask/seafloor_detection/config.yaml \
+  --output benchmark-results/basic
+```
+
+The configuration controls the input backend (`numpy`, `dask_memory`, or `dask`),
+Dask scheduler, chunk sizes, benchmark repetitions, and number of RAW files.
+Computational chunks may differ from the storage chunks used to prepare the
+Zarr data. With multiple profiles and file counts in one configuration, the
+runner prepares the calibrated data once and reuses it across benchmark cases
+and both revisions.
+
+Results include timing summaries, resource metrics, plots, and numerical
+output comparisons. See the [Basic seafloor detection benchmark notebook](https://github.com/echostack-org/echopype-examples/tree/main/notebooks/benchmark/basic_seafloor) for a worked example and configuration options.
+
+The benchmark workflow in GitHub Actions can also be launched manually with a
+base revision, head revision, benchmark path, and configuration file.
+
+```{warning}
+Warning: Benchmark runs generate results and intermediate data in the specified `--output`
+directory, including prepared Zarr datasets and temporary repository checkouts.
+These files can consume substantial disk space, particularly when testing large
+datasets or running benchmarks repeatedly. Monitor available disk space and
+remove benchmark output directories when they are no longer needed.
+```
+
+### Backend and chunk-size considerations
+
+Benchmark performance depends on dataset size, storage layout, computation chunks, and the selected backend.
+NumPy can outperform Dask when data fit comfortably in memory, while Dask enables lazy and parallel computation for larger datasets.
+When configuring Dask benchmarks:
+
+- **Chunk size:** Choose chunks large enough to limit scheduling overhead, but small enough to fit multiple chunks in memory.
+- **Storage alignment:** Prefer computation chunks that are multiples of the underlying Zarr storage chunks to avoid inefficient reads.
+- **Benchmarking:** Compare multiple chunk configurations rather than assuming that larger chunks are always faster.
+- **Rechunking:** Xarray's `Dataset.chunk()` allows adjusting Dask chunk sizes throughout a workflow to optimize different operations (e.g., temporal aggregation or reductions along specific dimensions). While rechunking introduces computational and memory overhead, adapting chunk sizes to each processing step can improve overall performance.
+
+For further recommendations, see [Dask Array Best Practices](https://docs.dask.org/en/stable/array-best-practices.html) and [Xarray Chunking and Performance](https://docs.xarray.dev/en/stable/user-guide/dask.html#chunking-and-performance).
+
 ## pre-commit hooks
 
 The echopype development environment includes [pre-commit](https://pre-commit.com),

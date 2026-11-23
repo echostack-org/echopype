@@ -22,7 +22,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python
-      uses: actions/setup-python@v7.0.0
+      uses: actions/setup-python@v7.1.0
       with:
         python-version: 3.13
 
@@ -46,7 +46,7 @@ jobs:
     needs: build-artifact
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/setup-python@v7.0.0
+    - uses: actions/setup-python@v7.1.0
       name: Install Python
       with:
         python-version: 3.13
@@ -80,7 +80,7 @@ jobs:
 
     - name: Publish to Test PyPI
       if: github.event_name == 'release' && github.event.action == 'released'
-      uses: pypa/gh-action-pypi-publish@v1.14.2
+      uses: pypa/gh-action-pypi-publish@v1.14.3
       with:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository-url: https://test.pypi.org/legacy/
@@ -122,6 +122,6 @@ jobs:
         name: releases
         path: dist
     - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.14.2
+      uses: pypa/gh-action-pypi-publish@v1.14.3
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}

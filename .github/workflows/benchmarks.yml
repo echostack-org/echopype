@@ -1,0 +1,89 @@
+
+name: Method benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Optional reference branch or commit for comparison
+        default: ""
+        required: false
+        type: string
+
+      head_ref:
+        description: Branch, commit or PR to benchmark
+        default: main
+        required: true
+        type: string
+
+      benchmark:
+        description: Benchmark file or directory
+        default: mask/seafloor_detection/
+        required: true
+        type: string
+
+      config:
+        description: Benchmark configuration YAML
+        default: echopype/benchmarks/mask/seafloor_detection/config.yaml
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    if: ${{ github.actor == 'LOCEANlloydizard' || github.actor == 'leewujung' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      BASE_REF: ${{ inputs.base_ref }}
+      HEAD_REF: ${{ inputs.head_ref }}
+      BENCHMARK: ${{ inputs.benchmark }}
+      CONFIG: ${{ inputs.config }}
+
+    steps:
+      - uses: actions/checkout@v7
+        if: ${{ !env.ACT }}
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install uv
+          UV_PROJECT_ENVIRONMENT="$RUNNER_TEMP/venv" uv sync --group benchmark-test --python "$(command -v python)"
+
+      - name: Run benchmarks
+        run: |
+          ARGS=(
+            --head "$HEAD_REF"
+            --benchmark "$BENCHMARK"
+            --config "$CONFIG"
+            --output "$RUNNER_TEMP/benchmark-results"
+          )
+
+          if [[ -n "$BASE_REF" ]]; then
+            ARGS+=(--base "$BASE_REF")
+          fi
+
+          "$RUNNER_TEMP/venv/bin/python" echopype/benchmarks/run.py "${ARGS[@]}"
+
+      - name: Publish summary
+        run: |
+          cat "$RUNNER_TEMP/benchmark-results/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmarks
+          path: |
+            ${{ runner.temp }}/benchmark-results/
+            !${{ runner.temp }}/benchmark-results/sources/**
+            !${{ runner.temp }}/benchmark-results/suite/**
