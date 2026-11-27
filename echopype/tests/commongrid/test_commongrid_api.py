@@ -551,6 +551,31 @@ def test_compute_NASC_values(request, er_type):
         ds_NASC.NASC.values, expected_nasc.values, atol=1e-10, rtol=1e-10, equal_nan=True
     )
 
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("compute_func", "bin_kwargs", "var"),
+    [
+        (ep.commongrid.compute_MVBS, {"range_bin": "2m", "ping_time_bin": "1s"}, "Sv"),
+        (ep.commongrid.compute_NASC, {"range_bin": "2m", "dist_bin": "0.5nmi"}, "NASC"),
+    ],
+)
+def test_compute_MVBS_NASC_keep_channel_order(request, compute_func, bin_kwargs, var):
+    """Channels that are not in sorted order keep their order and their values."""
+    ds_Sv = request.getfixturevalue("mock_Sv_dataset_regular")
+    # Make the channels differ so that a mix-up would show in the values
+    ds_Sv["Sv"] = ds_Sv["Sv"] + xr.DataArray([0.0, 10.0], dims="channel")
+    ds_Sv_reordered = ds_Sv.sel(channel=ds_Sv["channel"].data[::-1])
+
+    expected = compute_func(ds_Sv, **bin_kwargs)
+    result = compute_func(ds_Sv_reordered, **bin_kwargs)
+
+    assert list(result["channel"].data) == list(ds_Sv_reordered["channel"].data)
+    xr.testing.assert_allclose(result[var], expected[var].sel(channel=result["channel"]))
+    xr.testing.assert_equal(
+        result["frequency_nominal"], ds_Sv_reordered["frequency_nominal"]
+    )
+
 @pytest.mark.integration
 @pytest.mark.parametrize(
     ("operation","skipna", "range_var"),
