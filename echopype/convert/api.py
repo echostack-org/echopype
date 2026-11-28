@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 from ..echodata.echodata import XARRAY_ENGINE_MAP, EchoData
 from ..utils import io
 from ..utils.coding import COMPRESSION_SETTINGS
-from ..utils.prov import add_processing_level
 
 BEAM_SUBGROUP_DEFAULT = "Beam_group1"
 
@@ -341,7 +340,6 @@ def _check_file(
     return str(raw_file), str(xml), bot_file, idx_file
 
 
-@add_processing_level("L1A", is_echodata=True)
 def open_raw(
     raw_file: "PathHint",
     sonar_model: "SonarModelsHint",
