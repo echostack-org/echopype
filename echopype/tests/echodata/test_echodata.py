@@ -4,9 +4,10 @@ import os
 import fsspec
 from pathlib import Path
 import shutil
+import warnings
 
 from xarray import DataTree
-from zarr.errors import GroupNotFoundError
+from zarr.errors import GroupNotFoundError, ZarrUserWarning
 
 import echopype
 from echopype.echodata import EchoData
@@ -839,3 +840,22 @@ def test_echodata_delete(recwarn, ek60_path):
 
     # Check that it doesn't exist
     assert not os.path.exists(temp_zarr_path)
+
+
+@pytest.mark.unit
+def test_to_zarr_no_deprecated_chunk_warning(test_path):
+    """
+    This test checks that dask rechunking receives dictionary and not tuple.
+    """
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        ed = open_raw(
+            test_path["EK60"] / "ncei-wcsd/SH1701/TEST-D20170114-T202932.raw",
+            sonar_model="EK60",
+        )
+        ed.to_zarr(overwrite=True)
+    assert not any(
+        isinstance(w.message, FutureWarning)
+        and "Supplying chunks as dimension-order tuples" in str(w.message)
+        for w in caught_warnings
+    )
