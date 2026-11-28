@@ -1,6 +1,7 @@
 from textwrap import dedent
 
 import os
+import json
 import fsspec
 from pathlib import Path
 import shutil
@@ -18,7 +19,7 @@ import pytest
 import xarray as xr
 import numpy as np
 
-from utils import get_mock_echodata, check_consolidated  # noqa: F401
+from utils import get_mock_echodata
 
 @pytest.fixture
 def ek60_path(test_path):
@@ -318,16 +319,37 @@ class TestEchoData:
         assert result is None
         assert isinstance(ed_result, xr.Dataset)
 
-    def test_to_zarr_created(self, mock_echodata):
+    def test_consolidated_metadata_after_to_zarr(self, mock_echodata):
         """
-        Tests to_zarr creation. Currently, this test uses a mock EchoData object that only
-        has attributes.
+        Test that echodata to_zarr export includes consolidated metadata and check
+        that all groups exist.
         """
+        # get consolidated metadata dictionary
         zarr_path = Path("test.zarr")
-        mock_echodata.to_zarr(str(zarr_path), overwrite=True)
-        json_path = zarr_path / "zarr.json"
+        mock_echodata.to_zarr(str(zarr_path), overwrite=True, consolidated=True)
+        metadata_path = zarr_path / "zarr.json"
+        with open(metadata_path) as file:
+            consolidated_metadata_json = json.load(file)
+        consolidated_metadata_dict = consolidated_metadata_json.get(
+            "consolidated_metadata", {}
+        ).get("metadata", {})
+        file_groups = []
+        for key, value in consolidated_metadata_dict.items():
+            if "consolidated_metadata" in value.keys():
+                file_groups.append(key)
 
-        assert json_path.exists()
+        # check that all group metadata is in the consolidated metadata dictionary
+        expected_groups = [
+            "Environment",
+            "Platform",
+            "Platform/NMEA",
+            "Provenance",
+            "Sonar",
+            "Sonar/Beam_group1",
+            "Vendor_specific",
+        ]
+        for expected_group in expected_groups:
+            assert expected_group in file_groups
 
         # clean up the zarr file
         shutil.rmtree(zarr_path)
